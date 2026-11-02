@@ -26,7 +26,7 @@ import type { AgentEvent, Json, Todo } from './types';
   };
 
   for (;;) {
-    const prompt = (await rl.question('sprig > ')).trim();
+    const prompt = (await rl.question('linkedqueue > ')).trim();
     if (!prompt) continue;
     if (prompt === 'exit' || prompt === 'quit') break;
     if (prompt === 'sessions') {

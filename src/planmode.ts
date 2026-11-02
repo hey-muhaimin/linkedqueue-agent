@@ -22,7 +22,7 @@ export function planModeSystem(mode: SessionMode, model: string): string {
   const blocking = mode === 'plan'
     ? 'First lay out a concrete, ordered todo list (one item in_progress), then STOP and wait for approval before making any changes.'
     : 'Execute the approved plan using the available tools.';
-  return `You are Sprig, a versatile AI agent that acts through tools.
+  return `You are LinkedQueue, a versatile AI agent that acts through tools.
 Mode: ${label} mode
 Model: ${model}
 

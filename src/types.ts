@@ -1,4 +1,4 @@
-// Sprig types — extended for session persistence, plan mode, hooks, and file editing.
+// LinkedQueue types — extended for session persistence, plan mode, hooks, and file editing.
 export type Json = Record<string, any>;
 
 export interface Todo { text: string; status: 'pending' | 'in_progress' | 'done' }

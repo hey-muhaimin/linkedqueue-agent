@@ -1,13 +1,13 @@
 # AGENTS.md
 
-Sprig — versatile AI agent harness with OpenClaw-style specialist agents: one TypeScript agent loop (tools, plan mode, hooks) behind an Electron UI and a CLI. Agent-facing operational notes, kept short.
+LinkedQueue — versatile AI agent harness with OpenClaw-style specialist agents: one TypeScript agent loop (tools, plan mode, hooks) behind an Electron UI and a CLI. Agent-facing operational notes, kept short.
 
 ## Commands
 
 - `npm run typecheck` — `tsc --noEmit`. Passes.
 - `npm run build` — `tsc` → emits to `dist/` (tsconfig: rootDir `src`, outDir `dist`, `include: ["src"]`).
 - `npm start` — `tsc && electron .`; main is `dist/main.js`, renderer loads from repo-root `renderer/`.
-- `npm run cli` — `tsx src/cli.ts`; REPL (`sprig > ` prompt; subcommands: `exit|quit`, `sessions`, `mode`, `resume`).
+- `npm run cli` — `tsx src/cli.ts`; REPL (`linkedqueue > ` prompt; subcommands: `exit|quit`, `sessions`, `mode`, `resume`).
 - `npm run deploy` — `vercel --prod --cwd .`.
 
 No lint / test / format scripts and no CI config. Verification: typecheck + build + smoke scripts.

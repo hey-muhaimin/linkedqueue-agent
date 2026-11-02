@@ -1,5 +1,5 @@
 {
-  "name": "sprig",
+  "name": "linkedqueue",
   "version": "0.4.0",
   "description": "Versatile AI agent harness with OpenClaw-style specialist agents \u2014 one TypeScript core behind an Electron UI and CLI.",
   "main": "dist/main.js",

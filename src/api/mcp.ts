@@ -140,7 +140,7 @@ async function connectOne(name: string): Promise<McpServerStatus> {
     await requestJson(proc, state, 'initialize', {
       protocolVersion: '2024-11-05',
       capabilities: {},
-      clientInfo: { name: 'sprig', version: '0.4.0' },
+      clientInfo: { name: 'linkedqueue', version: '0.4.0' },
     }, 10000);
     notifyJson(proc, 'notifications/initialized', {});
     const tools = await requestJson<{ tools: McpToolInfo[] }>(proc, state, 'tools/list', {}, 10000);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>sprig — terminal mockup</title>
+<title>linkedqueue — terminal mockup</title>
 <style>
 :root{--bg:#f2f2f2;--fg:#1c1c1c;--dim:#6a6a6a;--faint:#a8a8a8;--line:#cfcfcf;--sel:#e4e4e4;--ibg:#1c1c1c;--ifg:#f2f2f2;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -67,17 +67,17 @@ button.ri:hover,.cmd:hover{background:var(--ibg);color:var(--ifg)}.cmd span:last
 </style>
 </head>
 <body>
-<div class="top"><b>sprig</b><span class="sub">growth agent · mockup</span><span class="sp"></span><button class="tx" id="th" aria-label="Toggle theme">[theme]</button></div>
+<div class="top"><b>linkedqueue</b><span class="sub">growth agent · mockup</span><span class="sp"></span><button class="tx" id="th" aria-label="Toggle theme">[theme]</button></div>
 <div class="cols"><aside id="lr"><div class="rh">commands</div><div id="lc"></div><div class="rh">session</div><div class="ri"><span class="dim">status</span><span id="ls">ready</span></div><div class="ri"><span class="dim">tool calls</span><span id="ltc">0</span></div><div class="rh">keys</div><div class="ri"><span>y / n</span><span class="dim">approve</span></div><div class="ri"><span>esc</span><span class="dim">interrupt</span></div><div class="ri"><span>↑ ↓</span><span class="dim">history</span></div><div class="ri"><span>ctrl+k</span><span class="dim">focus input</span></div></aside><main id="mn"><div id="feed" role="log" aria-live="polite"><div id="t"></div><div id="w"><span id="sp">⠋</span> <span id="wt">working</span><span class="sp"></span></div></div>
 <div class="chips" id="chips"></div>
-<div class="in"><b>›</b><input id="q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="message or /help" aria-label="Message Sprig"></div>
+<div class="in"><b>›</b><input id="q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="message or /help" aria-label="Message LinkedQueue"></div>
 </main><aside id="rr"><div class="rh">plan</div><div id="rp"></div><div class="rh">files</div><div id="rf"></div><div class="rh">experiments</div><div id="re"></div><div id="rv"><div class="rh"><span id="rvt"></span><button class="tx" id="rvx" aria-label="Close viewer">[x]</button></div><pre id="rvb"></pre></div></aside></div>
 <div class="st"><span><span id="sd"></span> <span id="ss">ready</span></span><span id="sn">0 tools</span><span class="sp"></span><span class="kb">y/n approve · esc interrupt · ↑ history</span></div>
 <script>
 const $=s=>document.querySelector(s),T=$('#t'),F=$('#feed'),Q=$('#q'),RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root=document.documentElement;
-try{const s=localStorage.getItem('sprig-theme');if(s)root.dataset.theme=s}catch(e){}
-$('#th').onclick=()=>{const d=root.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),n=d==='dark'?'light':'dark';root.dataset.theme=n;try{localStorage.setItem('sprig-theme',n)}catch(e){}};
+try{const s=localStorage.getItem('linkedqueue-theme');if(s)root.dataset.theme=s}catch(e){}
+$('#th').onclick=()=>{const d=root.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),n=d==='dark'?'light':'dark';root.dataset.theme=n;try{localStorage.setItem('linkedqueue-theme',n)}catch(e){}};
 
 /* DOM helpers: text only, no innerHTML */
 function ln(cls,...parts){const d=document.createElement('div');d.className=cls||'';parts.forEach(p=>{if(typeof p==='string')d.append(p);else{const s=document.createElement('span');s.className=p[0];s.textContent=p[1];d.append(s)}});T.append(d);scroll();return d}
@@ -177,7 +177,7 @@ experiment:[
 install:[
  {t:'plan',todos:['fetch plugin source','install utm plugin','try utm_build']},
  {t:'say',x:'Installing a plugin means running code from a URL. Read it first, then decide.'},{t:'at',i:0},
- {t:'ask',name:'install_plugin',risk:'RUNS ARBITRARY CODE',body:['url   https://example.com/utm.js','name  utm'],note:'Plugins have full local access. Only install code you have read and trust.',yes:['installed utm · 1 tool added'],after:{t:'tool',name:'utm_build',arg:'url=https://acme.dev',out:['https://acme.dev?utm_source=sprig'],ms:500}},
+ {t:'ask',name:'install_plugin',risk:'RUNS ARBITRARY CODE',body:['url   https://example.com/utm.js','name  utm'],note:'Plugins have full local access. Only install code you have read and trust.',yes:['installed utm · 1 tool added'],after:{t:'tool',name:'utm_build',arg:'url=https://acme.dev',out:['https://acme.dev?utm_source=linkedqueue'],ms:500}},
  {t:'at',i:3}]
 };
 async function play(k){
@@ -200,13 +200,13 @@ function cmd(s){
   if(l==='/models'){ln('b','models');ln('dim','qwen3-coder · free · local · default');ln('dim','gpt-4o-mini');ln('dim','claude-haiku');ln('dim','switch via HARNESS_MODEL / mode select');return}
   if(l==='/config'){ln('b','config');ln('dim','model: qwen3-coder');ln('dim','base: http://localhost:11434/v1');ln('dim','skills: /skills');ln('dim','plugins: /install');return}
   if(l==='/skills'){const sk=['growth-review','seo-brief','content-engine'];sk.forEach(n=>{const d=ln('ri');const a=document.createElement('span'),c=document.createElement('span');a.textContent='◈ '+n;c.className='dim';c.textContent='installed';d.append(a,c)});return}
-  if(l==='/sessions'){ln('b','sessions');ln('dim','1 active · sprig-demo (act) · 2 archived');return}
+  if(l==='/sessions'){ln('b','sessions');ln('dim','1 active · linkedqueue-demo (act) · 2 archived');return}
   const k=/review/.test(l)?'review':/lead/.test(l)?'leads':/experiment/.test(l)?'experiment':/install|plugin/.test(l)?'install':null;
   if(!k)return ln('dim','mockup: try /help or tap a command below');
   if(k==='review'||k==='experiment')if(!EXP.some(e=>e[0]==='first-run checklist'))EXP.push(['first-run checklist','planned']);drawExp();
   play(k);
 }
-function banner(){ln('b','sprig');ln('dim','growth agent · simulated session\nplans, runs tools, asks before anything risky.\ntry /review, or tap a command below.')}
+function banner(){ln('b','linkedqueue');ln('dim','growth agent · simulated session\nplans, runs tools, asks before anything risky.\ntry /review, or tap a command below.')}
 ['/review','/leads','/experiment','/install','/experiments','/artifacts','/models','/config','/skills','/sessions','/help'].forEach(c=>{const b=document.createElement('button');b.className='chip';b.textContent=c;b.onclick=()=>{if(!busy)cmd(c)};$('#chips').append(b)});
 Q.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.isComposing){e.preventDefault();if(busy)return;const v=Q.value;Q.value='';if(v.startsWith('!')){ln('dim','$ '+v.slice(1));ln('dim','mock shell: '+v.slice(1));return}cmd(v)}

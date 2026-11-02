@@ -7,7 +7,7 @@ const RM = matchMedia('prefers-reduced-motion: reduce)').matches;
 
 const root = document.documentElement;
 try {
-  const s = localStorage.getItem('sprig-theme');
+  const s = localStorage.getItem('linkedqueue-theme');
   if (s) root.dataset.theme = s;
 } catch (e) {}
 
@@ -15,7 +15,7 @@ $('#th').onclick = () => {
   const d = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const n = d === 'dark' ? 'light' : 'dark';
   root.dataset.theme = n;
-  try { localStorage.setItem('sprig-theme', n); } catch (e) {}
+  try { localStorage.setItem('linkedqueue-theme', n); } catch (e) {}
 };
 
 function ln(cls, ...parts) {
@@ -53,14 +53,14 @@ const R = { p: $('#rp'), f: $('#rf'), e: $('#re') };
 let currentSessionId = null;
 let currentSession = null;
 const KNOWN_MODELS = ['gemma4:31b', 'gpt-oss:120b', 'gpt-oss:20b', 'glm-5.3', 'glm-5.3-flash', 'deepseek-v4-pro:0813', 'deepseek-v4.1-flash', 'kimi-k2.7-code', 'mistral-large-4', 'minimax-m3', 'nemotron-3-ultra', 'nemotron-3-super', 'mimo-v2.6-pro', 'muse-spark-open', 'beam'];
-let currentModel = localStorage.getItem('sprig-model') || 'gemma4:31b';
+let currentModel = localStorage.getItem('linkedqueue-model') || 'gemma4:31b';
 // If cached model is not in our known list, reset to default
 if (!KNOWN_MODELS.includes(currentModel)) {
   currentModel = 'gemma4:31b';
-  localStorage.setItem('sprig-model', currentModel);
+  localStorage.setItem('linkedqueue-model', currentModel);
 }
-let currentMode = localStorage.getItem('sprig-mode') || 'plan';
-let autoApprove = localStorage.getItem('sprig-auto-approve') === 'true';
+let currentMode = localStorage.getItem('linkedqueue-mode') || 'plan';
+let autoApprove = localStorage.getItem('linkedqueue-auto-approve') === 'true';
 let fsDir = '';
 let availableModels = [currentModel];
 
@@ -856,7 +856,7 @@ $('#auto-approve-toggle').onchange = async () => {
   try {
     await harness.permissions.autoApprove($('#auto-approve-toggle').checked);
     autoApprove = $('#auto-approve-toggle').checked;
-    localStorage.setItem('sprig-auto-approve', autoApprove);
+    localStorage.setItem('linkedqueue-auto-approve', autoApprove);
     ln('dim', 'auto-approve ' + (autoApprove ? 'on' : 'off'));
     setSt();
   } catch (e) { ln('dim', 'Error: ' + e.message); }
@@ -886,13 +886,13 @@ $('#modelBtn').onclick = async () => {
 };
 function setModel(name) {
   currentModel = name;
-  localStorage.setItem('sprig-model', currentModel);
+  localStorage.setItem('linkedqueue-model', currentModel);
   $('#curModel').textContent = currentModel;
   ln('dim', 'model → ' + currentModel);
 }
 $('#modeBtn').onclick = () => {
   currentMode = currentMode === 'plan' ? 'act' : 'plan';
-  localStorage.setItem('sprig-mode', currentMode);
+  localStorage.setItem('linkedqueue-mode', currentMode);
   $('#curMode').textContent = currentMode;
   if (currentSessionId && window.harness) {
     harness.setMode(currentSessionId, currentMode);
@@ -1122,7 +1122,7 @@ async function cmd(s) {
 }
 
 function banner() {
-  ln('b', 'sprig');
+  ln('b', 'linkedqueue');
   ln('dim', 'versatile agent · terminal\n@file to reference a file · !cmd to run shell · / for commands\nplans, runs tools, asks before anything risky.');
 }
 
@@ -1341,7 +1341,7 @@ if (window.harness) {
       return;
     }
     if (e.type === 'text') {
-      if (e.text && e.text.trim()) ln('say', '● ', ['b', 'sprig'], ' ' + e.text);
+      if (e.text && e.text.trim()) ln('say', '● ', ['b', 'linkedqueue'], ' ' + e.text);
     } else if (e.type === 'plan') {
       P.todos = e.todos || [];
       P.at = 0;

@@ -1,7 +1,7 @@
 # Renderer Terminal Task Report
 
 ## Summary
-Ported the Sprig Electron renderer to a terminal-style grayscale UI faithful to `sprig-terminal.html` and wired it to the real harness via `window.harness`. Added all-harness-functionality UI surfaces (filesystem, sessions, plugins, skills, MCP, memory, tools, agents/subagents/handoff) with scaffolding where backend endpoints don't exist.
+Ported the LinkedQueue Electron renderer to a terminal-style grayscale UI faithful to `linkedqueue-terminal.html` and wired it to the real harness via `window.harness`. Added all-harness-functionality UI surfaces (filesystem, sessions, plugins, skills, MCP, memory, tools, agents/subagents/handoff) with scaffolding where backend endpoints don't exist.
 
 ## Changes Made
 
@@ -36,7 +36,7 @@ Ported the Sprig Electron renderer to a terminal-style grayscale UI faithful to 
 
 ## Verification
 - Ran `node --check` on renderer/main.js - syntax OK
-- Reviewed against sprig-terminal.html for visual fidelity
+- Reviewed against linkedqueue-terminal.html for visual fidelity
 - Verified harness API usage matches preload/main
 
 ## Design Decisions

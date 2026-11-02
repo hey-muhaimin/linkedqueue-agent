@@ -1,4 +1,4 @@
-// Sprig utilities — paths, shell execution, JSON helpers.
+// LinkedQueue utilities — paths, shell execution, JSON helpers.
 import fs from 'fs';
 import path from 'path';
 import { execFile } from 'child_process';
