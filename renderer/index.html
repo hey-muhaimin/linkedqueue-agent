@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LinkedQueue — desktop mockup</title>
+<title>LinkedQueue — desktop</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232a8f62'/%3E%3Cg transform='translate(4 4) scale(.8333)' fill='white'%3E%3Cpath d='M7 4.5h5v5M14.5 12h5v5' fill='none' stroke='white' stroke-width='2'/%3E%3Crect x='2' y='2' width='5' height='5'/%3E%3Crect x='9.5' y='9.5' width='5' height='5' opacity='.6'/%3E%3Crect x='17' y='17' width='5' height='5' opacity='.3'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 /* ============ TOKENS ============ */
@@ -240,7 +240,7 @@ body.hide-rp #rp{display:none}
   <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
   <button class="ib" id="tsb" aria-label="Toggle sidebar" title="Sidebar (ctrl+b)">◧</button>
   <div class="brand"><svg class="lg" aria-hidden="true"><use href="#lq"/></svg><span>LinkedQueue</span></div>
-  <div class="crumb"><span class="faint">/</span><span>lq-core</span><span class="faint">›</span><b id="ttl">New thread</b></div>
+  <div class="crumb"><span class="faint">/</span><span>workspace</span><span class="faint">›</span><b id="ttl">New thread</b></div>
   <span class="sp"></span>
   <button class="ib" id="pk" aria-label="Command palette" title="Command palette (ctrl+p)">⌕</button>
   <button class="ib" id="th" aria-label="Toggle theme" title="Toggle theme">◐</button>
@@ -256,12 +256,12 @@ body.hide-rp #rp{display:none}
     <div class="scroll">
       <div class="sh"><span>Projects</span></div>
       <div id="threads">
-        <div class="row proj"><span class="ico">▾</span><span class="tt">lq-core</span></div>
+        <div class="row proj"><span class="ico">▾</span><span class="tt">workspace</span></div>
       </div>
       <div class="sh"><span>Library</span></div>
       <div id="lib"></div>
     </div>
-    <div class="me"><div class="av">D</div><div style="min-width:0"><div class="b" style="line-height:1.2">dev</div><div class="faint" style="font-size:12px">local · qwen3-coder</div></div><span class="sp"></span><button class="ib" id="cfg" aria-label="Settings" title="Config">⚙</button></div>
+    <div class="me"><div class="av">D</div><div style="min-width:0"><div class="b" style="line-height:1.2">local</div><div class="faint" style="font-size:12px">model endpoint</div></div><span class="sp"></span><button class="ib" id="cfg" aria-label="Settings" title="Config">⚙</button></div>
   </aside>
 
   <main id="mn">
@@ -274,7 +274,7 @@ body.hide-rp #rp{display:none}
           <div class="seg" id="mode" role="group" aria-label="Mode"><button data-m="Ask">Ask</button><button data-m="Plan">Plan</button><button data-m="Act" class="on">Act</button></div>
           <span class="sp"></span>
           <span class="qpill" id="qp" title="Tasks waiting in the queue"><svg class="lg sm" aria-hidden="true"><use href="#lq"/></svg> <b id="qn">0</b> queued</span>
-          <button class="pill" id="mdl" title="Switch model">qwen3-coder <span class="faint">▾</span></button>
+          <button class="pill" id="mdl" title="Switch model">model <span class="faint">▾</span></button>
           <button class="send" id="go" aria-label="Send" disabled>↑</button>
         </div>
       </div>
@@ -300,10 +300,10 @@ Run a command to see steps.</div></div>
 <footer class="sbar">
   <span><span id="sd"></span><span id="ss">ready</span></span>
   <span id="sn">0 tool calls</span>
-  <span class="opt">⎇ main</span>
+  <span class="opt">⎇ workspace</span>
   <span class="sp"></span>
-  <span class="opt">local · http://localhost:11434</span>
-  <span id="smd">qwen3-coder</span>
+  <span class="opt">local endpoint</span>
+  <span id="smd">model</span>
 </footer>
 
 <div id="scrim"></div>
