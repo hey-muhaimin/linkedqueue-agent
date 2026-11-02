@@ -65,7 +65,7 @@ No lint / test / format scripts and no CI config. Verification: typecheck + buil
 - `src/types.ts` AgentEvent is subagent-taggable: every event may carry `agent?: {id, name}`.
 - Sessions IPC returns `{ok, data}` envelope — renderer must unwrap `.data`.
 - `dist/` is build output; not committed (no git repo).
-- `data/` contains runtime state (sessions, memory, agents, mcp config, permissions). Smoke tests use temp dirs.
+- MCP servers are configured in `.linkedqueue/mcp.json` (project level) or `~/.linkedqueue/mcp.json` (global; project takes precedence). Legacy `data/mcp.json` is still read as a fallback.
 - `scripts/smoke-env.ts` must be imported first in smoke tests (sets env before `src/util.ts` loads).
 
 ## Known gaps

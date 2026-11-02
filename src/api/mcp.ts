@@ -3,9 +3,38 @@ import fs from 'fs';
 import path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import { DATA } from '../util';
+import os from 'os';
 import type { Tool } from '../types';
 
-const FILE = path.join(DATA, 'mcp.json');
+const PROJECT_MCP_FILE = path.join(process.env.HARNESS_WORKSPACE || process.cwd(), '.linkedqueue', 'mcp.json');
+const GLOBAL_MCP_FILE = path.join(os.homedir(), '.linkedqueue', 'mcp.json');
+const LEGACY_MCP_FILE = path.join(DATA, 'mcp.json');
+
+function mcpConfigPaths(): string[] {
+  return [PROJECT_MCP_FILE, GLOBAL_MCP_FILE, LEGACY_MCP_FILE];
+}
+
+function activeMcpConfigPath(): string {
+  for (const p of mcpConfigPaths()) {
+    if (fs.existsSync(p)) return p;
+  }
+  return PROJECT_MCP_FILE;
+}
+
+function readConfig(): { servers: McpServerConfig[] } {
+  for (const p of mcpConfigPaths()) {
+    try {
+      if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));
+    } catch { /* try next */ }
+  }
+  return { servers: [] };
+}
+
+function writeConfig(cfg: { servers: McpServerConfig[] }) {
+  const file = activeMcpConfigPath();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(cfg, null, 2));
+}
 
 export interface McpServerConfig { name: string; command: string; args?: string[]; env?: Record<string, string>; enabled?: boolean }
 export interface McpToolInfo { name: string; description: string; inputSchema: any }
@@ -24,13 +53,6 @@ interface ServerState {
 
 const servers = new Map<string, ServerState>();
 
-function readConfig(): { servers: McpServerConfig[] } {
-  try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch { return { servers: [] }; }
-}
-function writeConfig(cfg: { servers: McpServerConfig[] }) {
-  fs.mkdirSync(DATA, { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(cfg, null, 2));
-}
 function sanitize(s: string): string { return s.replace(/[^A-Za-z0-9]/g, '_').slice(0, 40); }
 
 export function listMcpServers(): McpServerStatus[] {
