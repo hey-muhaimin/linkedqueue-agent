@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LinkedQueue — desktop mockup</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232a8f62'/%3E%3Cg transform='translate(4 4) scale(.8333)' fill='white'%3E%3Cpath d='M7 4.5h5v5M14.5 12h5v5' fill='none' stroke='white' stroke-width='2'/%3E%3Crect x='2' y='2' width='5' height='5'/%3E%3Crect x='9.5' y='9.5' width='5' height='5' opacity='.6'/%3E%3Crect x='17' y='17' width='5' height='5' opacity='.3'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#ffffff;--side:#f6f6f4;--card:#fafaf8;--fg:#1f1f1e;--dim:#6b6b68;--faint:#a5a5a1;--line:#e6e6e2;--hover:#ededea;--press:#e2e2de;
+  --ac:#2a8f62;--acfg:#ffffff;
+  --ok:#1f7a3d;--warn:#9a6700;--err:#c0392b;--info:#2563c4;
+  --addbg:rgba(31,122,61,.09);--delbg:rgba(192,57,43,.09);
+  --r1:6px;--r2:10px;--r3:14px;
+  --shadow:0 8px 30px rgba(0,0,0,.14);
+  --sans:var(--mono);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c1b;--side:#151514;--card:#222221;--fg:#e9e9e6;--dim:#92928d;--faint:#5c5c58;--line:#2e2e2c;--hover:#272726;--press:#303030;--ac:#4cc38a;--acfg:#0d1f16;--ok:#5fcf80;--warn:#e0b04a;--err:#ff7b72;--info:#7aa7ff;--addbg:rgba(95,207,128,.10);--delbg:rgba(255,123,114,.10);--shadow:0 8px 30px rgba(0,0,0,.5)}}
+:root[data-theme="dark"]{--bg:#1c1c1b;--side:#151514;--card:#222221;--fg:#e9e9e6;--dim:#92928d;--faint:#5c5c58;--line:#2e2e2c;--hover:#272726;--press:#303030;--ac:#4cc38a;--acfg:#0d1f16;--ok:#5fcf80;--warn:#e0b04a;--err:#ff7b72;--info:#7aa7ff;--addbg:rgba(95,207,128,.10);--delbg:rgba(255,123,114,.10);--shadow:0 8px 30px rgba(0,0,0,.5)}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--mono);font-size:13px;line-height:1.6;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input,textarea{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+::selection{background:color-mix(in srgb,var(--ac) 30%,transparent)}
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.mono{font-family:var(--mono)}
+.dim{color:var(--dim)}.faint{color:var(--faint)}.b{font-weight:600}
+.c-ok{color:var(--ok)}.c-warn{color:var(--warn)}.c-err{color:var(--err)}.c-info{color:var(--info)}.c-ac{color:var(--ac)}.c-faint{color:var(--faint)}
+.sp{flex:1}
+
+/* ============ PRIMITIVES ============ */
+.ib{width:28px;height:28px;border-radius:var(--r1);display:inline-flex;align-items:center;justify-content:center;color:var(--dim);flex:none;font-size:15px}
+.ib:hover{background:var(--hover);color:var(--fg)}.ib:active{background:var(--press)}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:0 8px;font-size:11px;font-weight:600;line-height:18px;background:color-mix(in srgb,currentColor 14%,transparent);letter-spacing:.02em;white-space:nowrap}
+.kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font:11px/17px var(--mono);color:var(--dim);background:var(--card)}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--r1);padding:5px 12px;font-weight:500;border:1px solid var(--line);background:var(--bg)}
+.btn:hover{background:var(--hover)}.btn:active{background:var(--press)}
+.btn.pri{background:var(--ac);color:var(--acfg);border-color:transparent}.btn.pri:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:transparent;background:none;color:var(--dim)}.btn.ghost:hover{background:var(--hover);color:var(--fg)}
+.btn .kbd{background:transparent;color:inherit;opacity:.75;border-color:currentColor}
+.callout{display:flex;gap:8px;border-radius:var(--r1);padding:6px 10px;font-size:13px;background:color-mix(in srgb,var(--c) 10%,transparent);color:var(--fg);margin-top:8px}
+.callout::before{content:"!";font-weight:700;color:var(--c);width:1.2em;flex:none}
+.callout.warn{--c:var(--warn)}.callout.err{--c:var(--err)}.callout.info{--c:var(--info)}.callout.ok{--c:var(--ok)}
+.card{border:1px solid var(--line);border-radius:var(--r2);background:var(--card)}
+.spin{display:inline-block;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ============ WINDOW CHROME ============ */
+.tb{height:42px;flex:none;display:flex;align-items:center;gap:6px;padding:0 10px 0 14px;background:var(--side);border-bottom:1px solid var(--line);user-select:none}
+.lights{display:flex;gap:8px;margin-right:10px}
+.lights i{width:12px;height:12px;border-radius:50%;display:block}
+.lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+.crumb{display:flex;align-items:center;gap:8px;min-width:0;color:var(--dim)}
+.crumb b{color:var(--fg);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--fg);margin-right:6px;white-space:nowrap}
+.lg{width:18px;height:18px;flex:none;color:var(--ac)}.lg.sm{width:14px;height:14px}
+#empty .mark .lg{width:30px;height:30px;color:var(--acfg)}
+#app{flex:1;display:flex;min-height:0;position:relative}
+
+/* ============ SIDEBAR ============ */
+#sb{width:260px;flex:none;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#sb .top{padding:10px 10px 4px;display:flex;flex-direction:column;gap:2px}
+.row{display:flex;align-items:center;gap:10px;padding:5px 10px;border-radius:var(--r1);width:100%;color:var(--fg)}
+.row:hover{background:var(--hover)}.row.on{background:var(--press)}
+.row .ico{width:16px;text-align:center;color:var(--dim);flex:none}
+.row .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .meta{color:var(--faint);font-size:12px}
+.row.new{font-weight:600}
+.sh{padding:14px 20px 4px;color:var(--faint);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between}
+#threads,#lib{padding:0 10px;display:flex;flex-direction:column;gap:1px}
+.proj{font-weight:600}
+.th .dot{width:16px;text-align:center;flex:none;font-size:12px}
+#sb .scroll{flex:1;overflow:auto;min-height:0}
+.me{border-top:1px solid var(--line);padding:8px 10px;display:flex;align-items:center;gap:10px}
+.av{width:26px;height:26px;border-radius:50%;background:var(--ac);color:var(--acfg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex:none}
+
+/* ============ CONVERSATION ============ */
+#mn{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg)}
+#feed{flex:1;overflow:auto;min-height:0;scroll-behavior:smooth}
+#conv{max-width:780px;margin:0 auto;padding:28px 24px 12px;display:flex;flex-direction:column;gap:14px}
+.user{align-self:flex-end;max-width:84%;background:var(--hover);border-radius:var(--r3);border-bottom-right-radius:4px;padding:8px 14px;white-space:pre-wrap;word-break:break-word}
+.ai{white-space:pre-wrap;word-break:break-word}
+.ai code,.callout code{font:12.5px var(--mono);background:var(--hover);padding:1px 5px;border-radius:4px}
+.ai.head{font-weight:600}
+#empty{margin:9vh auto 0;text-align:center;max-width:620px}
+#empty .mark{width:44px;height:44px;border-radius:12px;background:var(--ac);color:var(--acfg);display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+#empty h1{font-size:24px;line-height:1.25;margin:0 0 4px;font-weight:600;letter-spacing:-.01em}
+#empty p{margin:0 0 22px;color:var(--dim)}
+.sug{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+.sug button{border:1px solid var(--line);border-radius:var(--r2);padding:12px 14px;background:var(--card);display:flex;flex-direction:column;gap:2px}
+.sug button:hover{background:var(--hover);border-color:var(--faint)}
+.sug b{font-weight:600}.sug span{color:var(--dim);font-size:13px}
+@media(max-width:560px){.sug{grid-template-columns:1fr}}
+
+/* tool rows */
+.tl{display:flex;flex-direction:column}
+.tl>button{display:flex;align-items:center;gap:8px;padding:3px 8px;margin:0 -8px;border-radius:var(--r1);color:var(--dim);font-size:13px;width:calc(100% + 16px)}
+.tl>button:hover{background:var(--hover);color:var(--fg)}
+.tl .ti{width:16px;text-align:center;flex:none}
+.tl .tn{font-family:var(--mono);color:var(--fg);font-size:12.5px}
+.tl .ta{font-family:var(--mono);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36ch}
+.tl .sum{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--faint)}
+.tl .chev{color:var(--faint);transition:transform .12s;flex:none}
+.tl.open .chev{transform:rotate(90deg)}
+.tl .out{display:none;margin:4px 0 2px 24px;padding:8px 12px;font:12.5px/1.55 var(--mono);color:var(--dim);overflow-x:auto;white-space:pre}
+.tl.open .out{display:block}
+
+/* plan card */
+.plan{padding:10px 14px;cursor:pointer}
+.plan .ph{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-weight:600}
+.pbar{flex:1;height:4px;border-radius:2px;background:var(--line);overflow:hidden;max-width:160px}.pbar i{display:block;height:100%;background:var(--ac);transition:width .25s}
+.pi{display:flex;gap:10px;padding:1px 0;color:var(--faint)}.pi .g{width:16px;text-align:center;flex:none}
+.pi.done{color:var(--dim)}.pi.done .g{color:var(--ok)}.pi.now{color:var(--fg);font-weight:500}.pi.now .g{color:var(--ac)}
+.plan.collapsed .pi:not(.now){display:none}
+
+/* approval */
+.ask{border:1px solid var(--rc,var(--line));border-radius:var(--r2);background:var(--card);overflow:hidden}
+.ask.lvl-warn{--rc:color-mix(in srgb,var(--warn) 55%,var(--line))}.ask.lvl-err{--rc:color-mix(in srgb,var(--err) 60%,var(--line))}
+.ask .ah{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.ask .ah .shield{font-size:15px}
+.ask .ab{padding:0 14px 4px}
+.ask pre.code,.ask .dcard{margin:0 0 8px;padding:8px 12px;border-radius:var(--r1);background:var(--bg);border:1px solid var(--line);font:12.5px/1.55 var(--mono);overflow-x:auto}
+.ask .dcard{padding:0;overflow:hidden}
+.ask .dcard .fh{padding:4px 12px;border-bottom:1px solid var(--line);color:var(--dim);font:12px var(--mono)}
+.ask .af{display:flex;justify-content:flex-end;gap:8px;padding:8px 14px 12px;flex-wrap:wrap}
+.ask.done .af{display:none}.ask.done{opacity:.82}
+.ask .res{padding:0 14px 12px;font-weight:600}
+
+/* file card + diff */
+.fc{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer}
+.fc:hover{background:var(--hover)}
+.fc .fi{color:var(--info)}.fc .nm{font-weight:600}.fc .pl{color:var(--ok);font:12px var(--mono)}.fc .mi{color:var(--err);font:12px var(--mono)}
+.dl{display:flex;font:12.5px/1.6 var(--mono);white-space:pre}
+.dl .n{width:4ch;text-align:right;color:var(--faint);padding-right:1ch;flex:none;user-select:none}
+.dl .g{width:2ch;flex:none;color:var(--faint);user-select:none}
+.dl.add{background:var(--addbg)}.dl.add .g{color:var(--ok)}
+.dl.del{background:var(--delbg)}.dl.del .g{color:var(--err)}
+.dl.hunk{color:var(--info)}
+
+.working{display:none;align-items:center;gap:10px;color:var(--dim);padding:2px 0}
+body.busy .working{display:flex}
+.working .shimmer{background:linear-gradient(90deg,var(--dim),var(--fg),var(--dim));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 1.8s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+body.wait .working .shimmer{animation:none;background:none;color:var(--ac)}
+body.wait .working .shimmer::after{content:" · waiting for you"}
+
+/* ============ COMPOSER ============ */
+.cw{flex:none;max-width:780px;width:100%;margin:0 auto;padding:4px 24px 10px}
+.cmp{border:1px solid var(--line);border-radius:var(--r3);background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.04);padding:10px 12px 8px;transition:border-color .12s,box-shadow .12s}
+.cmp:focus-within{border-color:var(--faint);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 16%,transparent)}
+#q{display:block;width:100%;resize:none;border:0;background:none;outline:0;max-height:200px;line-height:1.5;padding:2px 2px 8px}
+#q::placeholder{color:var(--faint)}
+.cf{display:flex;align-items:center;gap:6px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.seg button{padding:2px 10px;font-size:12.5px;color:var(--dim)}
+.seg button.on{background:var(--press);color:var(--fg);font-weight:600}
+.seg button:not(.on):hover{background:var(--hover)}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:2px 8px;font-size:12.5px;color:var(--dim)}
+.pill:hover{background:var(--hover);color:var(--fg)}
+.qpill{display:none;align-items:center;gap:6px;border-radius:8px;padding:2px 8px;font-size:12.5px;color:var(--dim)}
+.qpill b{color:var(--ac)}
+.qpill.on{display:inline-flex}
+.send{width:30px;height:30px;border-radius:50%;background:var(--ac);color:var(--acfg);display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none}
+.send:hover{filter:brightness(1.08)}
+.send[disabled]{background:var(--press);color:var(--faint);cursor:default;filter:none}
+body.busy .send{background:var(--fg);color:var(--bg)}
+.hint{display:flex;gap:14px;color:var(--faint);font-size:12px;padding:6px 6px 0;flex-wrap:wrap}
+
+/* ============ RIGHT PANEL ============ */
+#rp{width:360px;flex:none;border-left:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);flex:none}
+.tabs button{padding:6px 12px;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;gap:6px;align-items:center}
+.tabs button:hover{color:var(--fg)}.tabs button.on{color:var(--fg);border-color:var(--ac);font-weight:600}
+.tabs .n{font-size:11px;background:var(--hover);border-radius:99px;padding:0 6px;color:var(--dim)}
+.pane{display:none;flex:1;min-height:0;overflow:auto;padding:10px}.pane.on{display:flex;flex-direction:column;gap:8px}
+.pane .empty{color:var(--faint);padding:20px 8px;text-align:center;white-space:pre-line}
+#viewer{display:none;border:1px solid var(--line);border-radius:var(--r2);overflow:hidden;background:var(--card);flex:1;min-height:160px;flex-direction:column}
+#viewer.on{display:flex}
+#viewer .vh{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-weight:600}
+#viewer .vb{overflow:auto;flex:1;padding:6px 0}
+
+/* queue (linked tasks) */
+.qi{padding:8px 12px;display:flex;gap:10px;align-items:flex-start;position:relative}
+.qi .qg{width:16px;text-align:center;flex:none;margin-top:1px}
+.qi .qt{flex:1;min-width:0}
+.qi .qd{color:var(--faint);font-size:12px}
+.qlink{width:2px;height:10px;background:var(--line);margin:-8px 0 -8px 22px;flex:none}
+
+/* ============ STATUS BAR ============ */
+.sbar{height:26px;flex:none;display:flex;align-items:center;gap:16px;padding:0 12px;background:var(--side);border-top:1px solid var(--line);color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden}
+#sd{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}
+body.busy #sd{background:var(--warn)}body.wait #sd{background:var(--ac)}
+
+/* ============ TOAST + PALETTE ============ */
+#toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,8px);background:var(--fg);color:var(--bg);padding:6px 14px;border-radius:99px;z-index:70;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;font-size:13px;max-width:80vw}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#pal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;align-items:flex-start;justify-content:center;padding-top:14vh}
+#pal .box{width:min(580px,92vw);background:var(--bg);border:1px solid var(--line);border-radius:var(--r3);box-shadow:var(--shadow);display:flex;flex-direction:column;max-height:64vh;overflow:hidden}
+#pal-l{border:0;outline:0;background:none;padding:14px 16px;border-bottom:1px solid var(--line);font-size:15px}
+#pal-o{overflow:auto;padding:6px}
+.pal-i{display:flex;justify-content:space-between;gap:12px;padding:7px 10px;border-radius:var(--r1);cursor:pointer}
+.pal-i.on,.pal-i:hover{background:var(--press)}
+.pal-i .c{font-family:var(--mono);font-size:13px}
+#pal .ft{padding:6px 14px;border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+#scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:30}
+
+/* ============ RESPONSIVE ============ */
+body.hide-sb #sb{display:none}
+body.hide-rp #rp{display:none}
+@media(max-width:959px){
+  #rp{display:none;position:fixed;top:42px;bottom:26px;right:0;z-index:40;width:min(380px,92vw);box-shadow:var(--shadow)}
+  body.show-rp #rp{display:flex}
+  body.show-rp #scrim{display:block}
+}
+@media(max-width:719px){
+  #sb{display:none;position:fixed;top:42px;bottom:26px;left:0;z-index:40;width:min(300px,86vw);box-shadow:var(--shadow)}
+  body.show-sb #sb{display:flex}
+  body.show-sb #scrim{display:block}
+  .lights{display:none}
+  .hint{display:none}
+  .brand span{display:none}
+  #conv{padding:18px 14px 8px}.cw{padding:4px 12px 8px}
+  .sbar .opt{display:none}
+}
+@media(pointer:coarse){#q{font-size:16px}.row{padding:9px 10px}.ib{width:36px;height:36px}.btn{padding:9px 14px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="lq" viewBox="0 0 24 24"><path d="M7 4.5h5v5M14.5 12h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/><rect x="2" y="2" width="5" height="5" fill="currentColor"/><rect x="9.5" y="9.5" width="5" height="5" fill="currentColor" opacity=".6"/><rect x="17" y="17" width="5" height="5" fill="currentColor" opacity=".3"/></symbol></svg>
+
+<header class="tb">
+  <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+  <button class="ib" id="tsb" aria-label="Toggle sidebar" title="Sidebar (ctrl+b)">◧</button>
+  <div class="brand"><svg class="lg" aria-hidden="true"><use href="#lq"/></svg><span>LinkedQueue</span></div>
+  <div class="crumb"><span class="faint">/</span><span>lq-core</span><span class="faint">›</span><b id="ttl">New thread</b></div>
+  <span class="sp"></span>
+  <button class="ib" id="pk" aria-label="Command palette" title="Command palette (ctrl+p)">⌕</button>
+  <button class="ib" id="th" aria-label="Toggle theme" title="Toggle theme">◐</button>
+  <button class="ib" id="trp" aria-label="Toggle review panel" title="Review panel">◨</button>
+</header>
+
+<div id="app">
+  <aside id="sb" aria-label="Threads">
+    <div class="top">
+      <button class="row new" id="newth"><span class="ico">＋</span><span class="tt">New thread</span><span class="kbd">ctrl+n</span></button>
+      <button class="row" id="srch"><span class="ico">⌕</span><span class="tt dim">Search commands</span><span class="kbd">ctrl+p</span></button>
+    </div>
+    <div class="scroll">
+      <div class="sh"><span>Projects</span></div>
+      <div id="threads">
+        <div class="row proj"><span class="ico">▾</span><span class="tt">lq-core</span></div>
+      </div>
+      <div class="sh"><span>Library</span></div>
+      <div id="lib"></div>
+    </div>
+    <div class="me"><div class="av">D</div><div style="min-width:0"><div class="b" style="line-height:1.2">dev</div><div class="faint" style="font-size:12px">local · qwen3-coder</div></div><span class="sp"></span><button class="ib" id="cfg" aria-label="Settings" title="Config">⚙</button></div>
+  </aside>
+
+  <main id="mn">
+    <div id="feed" role="log" aria-live="polite"><div id="conv"></div></div>
+    <div class="cw">
+      <div class="cmp">
+        <textarea id="q" rows="1" placeholder="Ask LinkedQueue to build, fix, or explain…  /  for commands" aria-label="Message LinkedQueue" autocomplete="off" spellcheck="false" enterkeyhint="send"></textarea>
+        <div class="cf">
+          <button class="ib" id="att" aria-label="Attach" title="Attach">＋</button>
+          <div class="seg" id="mode" role="group" aria-label="Mode"><button data-m="Ask">Ask</button><button data-m="Plan">Plan</button><button data-m="Act" class="on">Act</button></div>
+          <span class="sp"></span>
+          <span class="qpill" id="qp" title="Tasks waiting in the queue"><svg class="lg sm" aria-hidden="true"><use href="#lq"/></svg> <b id="qn">0</b> queued</span>
+          <button class="pill" id="mdl" title="Switch model">qwen3-coder <span class="faint">▾</span></button>
+          <button class="send" id="go" aria-label="Send" disabled>↑</button>
+        </div>
+      </div>
+      <div class="hint"><span><span class="kbd">enter</span> send</span><span><span class="kbd">shift+enter</span> newline</span><span><span class="kbd">y</span> <span class="kbd">n</span> approve / reject</span><span><span class="kbd">esc</span> stop</span></div>
+    </div>
+  </main>
+
+  <aside id="rp" aria-label="Review panel">
+    <div class="tabs" role="tablist">
+      <button class="on" data-tab="plan" role="tab">Plan</button>
+      <button data-tab="files" role="tab">Changes <span class="n" id="nf">0</span></button>
+      <button data-tab="queue" role="tab">Queue <span class="n" id="ne">0</span></button>
+      <span class="sp"></span>
+      <button class="ib" id="crp" aria-label="Close panel" style="margin-bottom:2px">✕</button>
+    </div>
+    <div class="pane on" id="p-plan"><div class="empty">No plan yet.
+Run a command to see steps.</div></div>
+    <div class="pane" id="p-files"><div id="flist"></div><div id="viewer"><div class="vh"><span id="vt" class="mono" style="font-size:13px"></span><span class="sp"></span><span class="badge c-ok" id="vbadge">new file</span></div><div class="vb" id="vb"></div></div><div class="empty" id="fe">No changes yet.</div></div>
+    <div class="pane" id="p-queue"></div>
+  </aside>
+</div>
+
+<footer class="sbar">
+  <span><span id="sd"></span><span id="ss">ready</span></span>
+  <span id="sn">0 tool calls</span>
+  <span class="opt">⎇ main</span>
+  <span class="sp"></span>
+  <span class="opt">local · http://localhost:11434</span>
+  <span id="smd">qwen3-coder</span>
+</footer>
+
+<div id="scrim"></div>
+<div id="toast" role="status"></div>
+<div id="pal" role="dialog" aria-label="Command palette"><div class="box"><input id="pal-l" placeholder="Type a command…" autocomplete="off" spellcheck="false" aria-label="Filter commands"><div id="pal-o"></div><div class="ft">↑↓ navigate · enter run · esc close</div></div></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const C=$('#conv'),F=$('#feed'),Q=$('#q'),RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const root=document.documentElement;
+function logo(small){const n='http://www.w3.org/2000/svg',s=document.createElementNS(n,'svg'),u=document.createElementNS(n,'use');s.setAttribute('class','lg'+(small?' sm':''));s.setAttribute('aria-hidden','true');u.setAttribute('href','#lq');s.append(u);return s}
+function el(tag,cls,text){const d=document.createElement(tag);if(cls)d.className=cls;if(text!=null)d.textContent=text;return d}
+function add(node,parent){(parent||C).append(node);scroll();return node}
+const near=()=>F.scrollHeight-F.scrollTop-F.clientHeight<160;
+function scroll(){F.scrollTop=F.scrollHeight}
+let toastT=0;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1800)}
+const badge=(kind,text)=>el('span','badge c-'+kind,text);
+
+/* ---------- theme ---------- */
+try{const s=localStorage.getItem('lq-theme');if(s)root.dataset.theme=s}catch(e){}
+const curTheme=()=>root.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+$('#th').onclick=()=>{const n=curTheme()==='dark'?'light':'dark';root.dataset.theme=n;try{localStorage.setItem('lq-theme',n)}catch(e){}toast('Theme: '+n)};
+
+/* ---------- panels ---------- */
+const narrowSb=()=>matchMedia('(max-width:719px)').matches,narrowRp=()=>matchMedia('(max-width:959px)').matches;
+function panel(side,on){
+  const b=document.body,nar=side==='sb'?narrowSb():narrowRp();
+  const cur=nar?b.classList.contains('show-'+side):!b.classList.contains('hide-'+side);
+  if(on===undefined)on=!cur;
+  if(nar){b.classList.toggle('show-'+side,on);if(on)b.classList.remove('show-'+(side==='sb'?'rp':'sb'))}
+  else b.classList.toggle('hide-'+side,!on);
+}
+document.body.classList.add('hide-rp');
+$('#tsb').onclick=()=>panel('sb');$('#trp').onclick=()=>panel('rp');$('#crp').onclick=()=>panel('rp',false);
+$('#scrim').onclick=()=>{document.body.classList.remove('show-sb','show-rp')};
+function tab(n){$$('.tabs [data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===n));$$('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+n))}
+$$('.tabs [data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+
+/* ---------- state vocabulary ---------- */
+const GL={running:'◐',done:'✓',failed:'✗',queued:'○'};
+const SC={running:'c-info',done:'c-ok',failed:'c-err',queued:'c-faint'};
+const SB={running:'info',done:'ok',failed:'err',queued:'warn'};
+let busy=false,abort=false,pend=null,tools=0,hist=[],hi=0,t0=0,tick=0,thread=null;
+const sleep=ms=>new Promise((r,j)=>setTimeout(()=>abort?j('abort'):r(),RM?Math.min(ms,20):ms));
+
+/* ---------- the linked queue ---------- */
+const QUE=[{id:1,t:'Bump dependencies',s:'done',dep:null},{id:2,t:'Migrate to ESM',s:'done',dep:1}];
+let qid=2;
+function addQ(t,s){const last=QUE[QUE.length-1];const q={id:++qid,t,s,dep:last?last.id:null};QUE.push(q);drawQueue();return q}
+function drawQueue(){
+  const p=$('#p-queue');p.replaceChildren();
+  QUE.forEach((x,i)=>{
+    if(i)p.append(el('div','qlink'));
+    const r=el('div','card qi'),t=el('div','qt');
+    t.append(el('div','','#'+x.id+'  '+x.t),el('div','qd',x.dep?'after #'+x.dep:'no dependency'));
+    r.append(el('span','qg '+SC[x.s],GL[x.s]),t,badge(SB[x.s],x.s));p.append(r);
+  });
+  $('#ne').textContent=QUE.length;
+  const w=QUE.filter(x=>x.s==='queued').length;$('#qn').textContent=w;$('#qp').classList.toggle('on',w>0);
+}
+
+/* ---------- files / changes ---------- */
+const FILES={};
+function diffLines(arr,start){
+  let o=start,n=start;
+  return arr.map(([k,t])=>{const d=el('div','dl '+k);let num;
+    if(k==='del'){num=o;o++}else if(k==='add'){num=n;n++}else if(k==='hunk'){num=''}else{num=n;o++;n++}
+    d.append(el('span','n',String(num)),el('span','g',k==='add'?'+':k==='del'?'−':''),t||' ');return d});
+}
+function textLines(body){return body.split('\n').map((t,i)=>{const d=el('div','dl add');d.append(el('span','n',String(i+1)),el('span','g','+'),t||' ');return d})}
+function openFile(n){
+  const f=FILES[n];$('#vt').textContent=n;
+  $('#vb').replaceChildren(...(f.type==='diff'?diffLines(f.lines,f.start):textLines(f.body)));
+  const b=$('#vbadge');b.textContent=f.type==='diff'?'modified':'new file';b.className='badge '+(f.type==='diff'?'c-warn':'c-ok');
+  $('#viewer').classList.add('on');panel('rp',true);tab('files');
+}
+function railFile(n){
+  $('#fe').style.display='none';
+  const o=$('#flist').querySelector('[data-n="'+n+'"]');if(o)o.remove();
+  const b=el('button','row');b.dataset.n=n;b.append(el('span','ico c-info','✎'),el('span','tt mono',n),el('span','meta','view'));b.onclick=()=>openFile(n);$('#flist').append(b);
+  $('#nf').textContent=$('#flist').children.length;
+}
+
+/* ---------- sidebar threads ---------- */
+function addThread(title,state,done){
+  const run=state==='run';
+  const b=el('button','row th'+(run?' on':''));
+  const dot=el('span','dot '+(run?'c-info':done?'c-ok':'faint'),run?'◐':done?'✓':'○');
+  b.append(dot,el('span','tt',title),el('span','meta',run?'now':state));
+  b.onclick=()=>{toast('Mockup: thread history not wired up')};
+  $('#threads').insertBefore(b,$('#threads').children[1]);
+  return {el:b,dot,meta:b.querySelector('.meta')};
+}
+function endThread(ok){if(!thread)return;thread.dot.textContent=ok?'✓':'✗';thread.dot.className='dot '+(ok?'c-ok':'c-err');thread.meta.textContent='just now';thread.el.classList.remove('on')}
+addThread('Bump dependencies','1d',true);addThread('Migrate to ESM','3h',true);
+
+/* ---------- library ---------- */
+[['◈','Skills','/skills'],['⊞','MCP servers','/install'],['LQ','Queue','/queue'],['▤','Changes','/artifacts'],['◧','Design system','/design']].forEach(([i,t,c])=>{
+  const b=el('button','row'),ic=el('span','ico');if(i==='LQ')ic.append(logo(true));else ic.textContent=i;b.append(ic,el('span','tt',t));b.onclick=()=>{if(!busy)cmd(c);if(narrowSb())panel('sb',false)};$('#lib').append(b);
+});
+$('#newth').onclick=()=>{if(busy)return;newThread();if(narrowSb())panel('sb',false);Q.focus()};
+$('#srch').onclick=$('#pk').onclick=()=>{if(!busy)palOpen_()};
+$('#cfg').onclick=()=>{if(!busy)cmd('/config')};
+
+/* ---------- status ---------- */
+const PH='Ask LinkedQueue to build, fix, or explain…  /  for commands';
+function setSt(){
+  document.body.classList.toggle('busy',busy);document.body.classList.toggle('wait',!!pend);
+  const s=pend?'awaiting approval':busy?'working':'ready';
+  $('#ss').textContent=s;$('#sn').textContent=tools+' tool call'+(tools===1?'':'s');
+  Q.placeholder=busy?'LinkedQueue is working…  esc to stop':PH;
+  const g=$('#go');g.textContent=busy?'■':'↑';g.setAttribute('aria-label',busy?'Stop':'Send');g.disabled=!busy&&!Q.value.trim();
+}
+function spin(on){clearInterval(tick);if(!on)return;t0=Date.now();tick=setInterval(()=>{const w=$('.working .t');if(w)w.textContent='Working '+Math.floor((Date.now()-t0)/1000)+'s'},500)}
+
+/* ---------- empty state ---------- */
+function showEmpty(){
+  const e=el('div','');e.id='empty';
+  const mk=el('div','mark');mk.append(logo());e.append(mk,el('h1','','What are we building?'),el('p','','LinkedQueue plans, runs tools, and asks before it changes anything. Tasks you add are queued and linked in order.'));
+  const g=el('div','sug');
+  [['/fix','Fix failing tests','Run the suite, find the bug, patch it'],['/explore','Explore this repo','Map the architecture and write it down'],['/commit','Commit changes','Review the diff and write the message'],['/install','Add an MCP server','Connect a tool from a URL (with approval)']].forEach(([c,t,d])=>{const b=el('button');b.append(el('b','',t),el('span','',d));b.onclick=()=>{if(!busy)cmd(c)};g.append(b)});
+  e.append(g);C.append(e);
+}
+function newThread(){C.replaceChildren();P.el=null;P.todos=[];$('#p-plan').replaceChildren(el('div','empty','No plan yet.\nRun a command to see steps.'));$('#ttl').textContent='New thread';if(thread)thread.el.classList.remove('on');thread=null;showEmpty()}
+
+/* ---------- plan ---------- */
+const P={todos:[],at:0,el:null};
+function drawPlan(){
+  if(!P.el){P.el=add(el('div','card plan'));P.el.onclick=()=>P.el.classList.toggle('collapsed')}
+  const n=P.todos.length,d=Math.min(P.at,n);
+  P.el.replaceChildren();
+  const h=el('div','ph');const bar=el('div','pbar');bar.append(Object.assign(el('i'),{style:'width:'+(d/n*100)+'%'}));h.append('Plan',bar,el('span','dim',d+'/'+n));P.el.append(h);
+  P.todos.forEach((t,i)=>{const r=el('div','pi '+(i<P.at?'done':i===P.at?'now':''));r.append(el('span','g',i<P.at?'✓':i===P.at?'▸':'○'),t);P.el.append(r)});
+  const pp=$('#p-plan');pp.replaceChildren(P.el.cloneNode(true));pp.firstChild.classList.remove('collapsed');
+}
+
+/* ---------- steps ---------- */
+async function type(node,text){for(let i=0;i<text.length;i+=3){node.textContent=text.slice(0,i+3);if(near())scroll();await sleep(RM?0:12)}node.textContent=text}
+function toolRow(name,arg){
+  const w=el('div','tl'),h=el('button'),ic=el('span','ti dim'),sum=el('span','sum'),ch=el('span','chev','›');
+  ic.append(el('span','spin','◐'));
+  h.append(ic,el('span','tn',name),el('span','ta dim',arg?'('+arg+')':''),sum,ch);
+  const out=el('pre','out card');w.append(h,out);
+  h.onclick=()=>w.classList.toggle('open');
+  add(w);return {w,ic,sum,out};
+}
+function toolDone(r,out,fail){
+  r.ic.replaceChildren();r.ic.className='ti '+(fail?'c-err':'c-ok');r.ic.textContent=fail?'✗':'✓';
+  r.sum.textContent=out[0];r.out.textContent=out.join('\n');if(fail)r.sum.style.color='var(--err)';
+}
+async function step(e){
+  if(e.t==='say'){const d=add(el('div','ai'));await type(d,e.x);await sleep(150)}
+  else if(e.t==='plan'){P.todos=e.todos;P.at=0;P.el=null;drawPlan();await sleep(250)}
+  else if(e.t==='at'){P.at=e.i;drawPlan();await sleep(120)}
+  else if(e.t==='tool'){const r=toolRow(e.name,e.arg);await sleep(e.ms||600);tools++;setSt();toolDone(r,e.out,e.fail)}
+  else if(e.t==='ask'){await ask(e)}
+  else if(e.t==='file'){file(e.name,e.body)}
+  else if(e.t==='diff'){diff(e.name,e.start,e.lines)}
+}
+function fileCard(name,plus,minus){
+  const c=add(el('div','card fc'));
+  c.append(el('span','fi','✎'),el('span','nm mono',name),el('span','pl','+'+plus));
+  if(minus!=null)c.append(el('span','mi','−'+minus));
+  c.append(el('span','sp'),el('span','btn ghost','Review'));
+  c.onclick=()=>openFile(name);railFile(name);toast('Changed '+name);if(!narrowRp())openFile(name);
+}
+function file(name,body){FILES[name]={type:'text',body};fileCard(name,body.split('\n').length)}
+function diff(name,start,lines){FILES[name]={type:'diff',start,lines};fileCard(name,lines.filter(l=>l[0]==='add').length,lines.filter(l=>l[0]==='del').length)}
+function ask(e){
+  const lvl=e.lvl||'warn';
+  return new Promise(res=>{
+    const a=add(el('div','ask lvl-'+lvl)),h=el('div','ah');
+    h.append(el('span','shield c-'+lvl,lvl==='err'?'⛨':'◈'),el('span','b','Approve '),el('span','mono b',e.name+'?'),el('span','sp'),badge(lvl,e.risk));a.append(h);
+    const body=el('div','ab');
+    if(e.diff){const dc=el('div','dcard');dc.append(el('div','fh',e.file));diffLines(e.diff.lines,e.diff.start).forEach(d=>dc.append(d));body.append(dc)}
+    else body.append(el('pre','code',e.body.join('\n')));
+    if(e.note){const c=el('div','callout '+lvl);c.append(e.note);body.append(c)}
+    a.append(body);
+    const f=el('div','af'),n=el('button','btn'),y=el('button','btn pri');
+    n.append('Reject ',el('span','kbd','n'));y.append('Approve once ',el('span','kbd','y'));f.append(n,y);a.append(f);
+    scroll();
+    const decide=ok=>{if(!pend)return;pend=null;a.classList.add('done');a.append(el('div','res '+(ok?'c-ok':'c-err'),ok?'✓ Approved once':'✗ Rejected'));setSt();res(ok)};
+    pend={decide};setSt();y.onclick=()=>decide(true);n.onclick=()=>decide(false);y.focus({preventScroll:true});
+  }).then(async ok=>{
+    await sleep(400);tools++;setSt();
+    const r=toolRow(e.name,e.file||'');toolDone(r,ok?e.yes:['Rejected by user.'],!ok);
+    if(ok&&e.after)for(const s of [].concat(e.after))await step(s);
+  });
+}
+
+/* ---------- scripted sessions (simulated; no backend) ---------- */
+const S={
+fix:{title:'Fix failing tests',steps:[
+ {t:'plan',todos:['Run the test suite','Locate the failing test','Read the source','Patch the bug','Re-run the tests']},
+ {t:'tool',name:'run_tests',arg:'npm test',out:['43 tests · 42 passed · 1 failed','FAIL  src/queue.test.ts › retries with backoff','  expected 3 attempts, received 2','  at src/queue.test.ts:58:22'],fail:1,ms:900},
+ {t:'at',i:1},
+ {t:'tool',name:'grep',arg:'"maxRetries" src/',out:['3 matches','src/queue.ts:14     const maxRetries = opts.retries ?? 3','src/queue.ts:43     if (attempt >= maxRetries) throw err','src/queue.test.ts:55  new Queue({ retries: 3 })'],ms:450},
+ {t:'at',i:2},
+ {t:'tool',name:'read_file',arg:'src/queue.ts:40-46',out:['lines 40-46','  for (let attempt = 0; ; attempt++) {','    try { return await task() }','    catch (err) {','      if (attempt >= maxRetries) throw err','      await sleep(backoff(attempt))','    }'],ms:400},
+ {t:'say',x:'Found it. The retry guard uses `>=` against a zero-based attempt counter, so the final retry never runs. It should be `>`. Here is the patch.'},
+ {t:'at',i:3},
+ {t:'ask',name:'edit_file',file:'src/queue.ts',risk:'Modifies files',lvl:'warn',diff:{start:40,lines:[['hunk','@@ -40,6 +40,6 @@ run()'],['ctx','  for (let attempt = 0; ; attempt++) {'],['ctx','    try { return await task() }'],['ctx','    catch (err) {'],['del','      if (attempt >= maxRetries) throw err'],['add','      if (attempt > maxRetries) throw err'],['ctx','      await sleep(backoff(attempt))']]},
+  yes:['Applied 1 edit to src/queue.ts'],
+  after:[{t:'diff',name:'src/queue.ts',start:40,lines:[['hunk','@@ -40,6 +40,6 @@ run()'],['ctx','  for (let attempt = 0; ; attempt++) {'],['ctx','    try { return await task() }'],['ctx','    catch (err) {'],['del','      if (attempt >= maxRetries) throw err'],['add','      if (attempt > maxRetries) throw err'],['ctx','      await sleep(backoff(attempt))']]},
+   {t:'at',i:4},
+   {t:'tool',name:'run_tests',arg:'npm test',out:['43 tests · 43 passed','done in 2.4s'],ms:900},
+   {t:'say',x:'All 43 tests pass. I only touched src/queue.ts. Run /commit when you want me to commit it.'}]}]},
+explore:{title:'Explore this repo',steps:[
+ {t:'plan',todos:['List the project files','Read entry points and config','Write ARCHITECTURE.md']},
+ {t:'tool',name:'list_dir',arg:'.',out:['8 entries','src/        library source','test/       vitest suites','package.json','tsconfig.json','README.md'],ms:400},{t:'at',i:1},
+ {t:'tool',name:'read_file',arg:'package.json',out:['name     lq-core','scripts  build · test · lint','deps     zod, undici'],ms:400},
+ {t:'say',x:'lq-core is a small job-queue library. `Queue` in src/queue.ts runs tasks with retries and backoff, `Link` chains jobs so one starts only after another succeeds, and `store/` persists state to disk. I’ll write that down.'},{t:'at',i:2},
+ {t:'file',name:'ARCHITECTURE.md',body:'# lq-core\n\nsrc/queue.ts    Queue: run tasks, retry with backoff\nsrc/link.ts     Link: start a job after another succeeds\nsrc/store/      persist queue state to disk\ntest/           vitest suites, one per module\n\nflow: enqueue -> link -> run -> retry -> persist'}]},
+commit:{title:'Commit changes',steps:[
+ {t:'plan',todos:['Check git status','Review the diff','Write the commit message','Commit after approval']},
+ {t:'tool',name:'git_status',arg:'',out:['2 changed','M  src/queue.ts','?? ARCHITECTURE.md'],ms:400},{t:'at',i:1},
+ {t:'tool',name:'git_diff',arg:'src/queue.ts',out:['1 file changed, 1 insertion(+), 1 deletion(-)'],ms:450},{t:'at',i:2},
+ {t:'say',x:'One logical change, so one commit. I’ll leave ARCHITECTURE.md out of it.'},{t:'at',i:3},
+ {t:'ask',name:'git_commit',risk:'Writes to git history',lvl:'warn',body:['git add src/queue.ts','git commit -m "fix(queue): run the final retry attempt"'],yes:['[main 3f9a2c1] fix(queue): run the final retry attempt'],after:{t:'say',x:'Committed. Nothing was pushed.'}}]},
+install:{title:'Add an MCP server',steps:[
+ {t:'plan',todos:['Fetch the server manifest','Connect the server','List its tools']},
+ {t:'say',x:'Connecting an MCP server means running code from a URL. Read it first, then decide.'},{t:'at',i:0},
+ {t:'ask',name:'add_mcp_server',risk:'Runs arbitrary code',lvl:'err',body:['url   https://example.com/mcp/linear.js','name  linear'],note:'MCP servers run with full local access. Only connect code you have read and trust.',yes:['connected linear · 3 tools'],after:[{t:'at',i:2},{t:'tool',name:'list_tools',arg:'linear',out:['3 tools','linear.search_issues','linear.create_issue','linear.update_issue'],ms:500}]},
+ {t:'at',i:3}]}
+};
+async function play(k){
+  const sc=S[k];busy=true;abort=false;thread=addThread(sc.title,'run');$('#ttl').textContent=sc.title;
+  const q=addQ(sc.title,'running');
+  const w=el('div','working');w.append(el('span','spin','◐'),Object.assign(el('span','shimmer t'),{textContent:'Working…'}));
+  setSt();spin(true);let ok=true;
+  try{for(const e of sc.steps){await step(e);C.append(w)}if(P.el&&P.todos.length)P.at=P.todos.length,drawPlan()}
+  catch(x){if(x!=='abort')throw x;ok=false;if(pend)pend.decide(false);add(el('div','dim','⎯ Stopped'))}
+  finally{busy=false;pend=null;spin(false);w.remove();endThread(ok);q.s=ok?'done':'failed';drawQueue();setSt()}
+}
+/* keep the working indicator at the bottom while a script runs */
+new MutationObserver(()=>{const w=$('.working');if(w&&w.nextSibling)C.append(w)}).observe(C,{childList:true});
+
+/* ---------- design system page ---------- */
+function sect(t){add(el('div','faint b',t.toUpperCase())).style.cssText='font-size:11px;letter-spacing:.08em;margin-top:10px'}
+function design(){
+  add(el('div','ai head','LinkedQueue design system'));
+  add(el('div','ai dim','Monospace throughout, neutral surfaces, one green accent. Amber, red and blue are reserved for state and risk.'));
+  sect('Palette');
+  const g=add(el('div','card'));g.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px';
+  [['--bg','Background'],['--side','Sidebar'],['--card','Card'],['--hover','Hover'],['--line','Border'],['--dim','Muted text'],['--ac','Accent'],['--ok','Success'],['--warn','Caution'],['--err','Danger'],['--info','Active']].forEach(([v,n])=>{const d=el('div');d.style.cssText='display:flex;gap:8px;align-items:center';const s=el('span');s.style.cssText='width:22px;height:22px;border-radius:6px;border:1px solid var(--line);flex:none;background:var(--'+v.slice(2)+')';d.append(s,el('span','',n));g.append(d)});
+  sect('Radius');
+  const rr=add(el('div','card'));rr.style.cssText='display:flex;gap:14px;padding:12px;align-items:center';
+  [['r1','6px'],['r2','10px'],['r3','14px']].forEach(([n,v])=>{const b=el('div');b.style.cssText='width:56px;height:36px;border:1px solid var(--faint);border-radius:'+v;const w=el('div','dim',n+' · '+v);w.style.cssText='display:flex;flex-direction:column;gap:4px;align-items:flex-start';w.prepend(b);rr.append(w)});
+  sect('Buttons');
+  const bt=add(el('div','card'));bt.style.cssText='display:flex;gap:8px;padding:12px;flex-wrap:wrap';
+  const b1=el('span','btn pri');b1.append('Approve once ',el('span','kbd','y'));const b2=el('span','btn');b2.append('Reject ',el('span','kbd','n'));bt.append(b1,b2,el('span','btn ghost','Ghost'),el('span','btn','Neutral'));
+  sect('Badges');
+  const bb=add(el('div','card'));bb.style.cssText='display:flex;gap:8px;padding:12px;flex-wrap:wrap';['ok','info','warn','err'].forEach(k=>bb.append(badge(k,k)));
+  sect('Task states');
+  const st=add(el('div','card'));st.style.cssText='display:flex;gap:18px;padding:12px;flex-wrap:wrap';Object.keys(GL).forEach(k=>st.append(el('span',SC[k],GL[k]+' '+k)));
+  sect('Callouts');
+  ['info','ok','warn','err'].forEach(k=>{const c=add(el('div','callout '+k));c.style.margin='0';c.append(k==='err'?'Runs arbitrary code.':k==='warn'?'This changes files on disk.':k==='ok'?'Finished cleanly.':'Neutral guidance.')});
+  sect('Diff');
+  const df=add(el('div','card'));df.style.overflow='hidden';
+  diffLines([['hunk','@@ src/queue.ts @@'],['ctx','  catch (err) {'],['del','    if (attempt >= maxRetries) throw err'],['add','    if (attempt > maxRetries) throw err']],42).forEach(d=>df.append(d));
+  sect('Tool rows');
+  const tr=toolRow('grep','"maxRetries"');toolDone(tr,['3 matches','src/queue.ts:14','src/queue.ts:43']);
+  const tf=toolRow('run_tests','npm test');toolDone(tf,['1 failed'],true);
+}
+
+/* ---------- commands ---------- */
+const CM=[['/fix','Fix failing tests'],['/explore','Explore this repo'],['/commit','Commit changes'],['/install','Add an MCP server'],['/queue','Show the task queue'],['/artifacts','List changed files'],['/design','Design system'],['/models','Model picker'],['/config','Agent config'],['/skills','Installed skills'],['/sessions','Sessions'],['/theme','Toggle theme'],['/clear','New thread'],['/help','Show help']];
+function msg(t){add(el('div','user',t))}
+function cmd(s){
+  s=s.trim();if(!s)return;hist.push(s);hi=hist.length;
+  const em=$('#empty');if(em)em.remove();
+  const l=s.toLowerCase();
+  if(l==='/clear')return newThread();
+  msg(s);
+  if(l==='/help'||l==='help'){const c=add(el('div','card'));c.style.cssText='padding:8px 12px;display:grid;grid-template-columns:auto 1fr;gap:2px 20px';CM.forEach(([a,b])=>{c.append(el('span','mono',a),el('span','dim',b))});return}
+  if(l==='/theme')return $('#th').click();
+  if(l==='/design')return design();
+  if(l==='/queue'||l==='/experiments'){panel('rp',true);tab('queue');return add(el('div','ai dim','Showing the task queue in the review panel.'))}
+  if(l==='/artifacts'){const k=Object.keys(FILES);if(!k.length)return add(el('div','ai dim','No changes yet. Try /fix.'));panel('rp',true);tab('files');return add(el('div','ai dim',k.length+' changed file'+(k.length===1?'':'s')+' in the review panel.'))}
+  if(l==='/models'){const c=add(el('div','card'));c.style.padding='8px 12px';[['qwen3-coder','free · local · default',1],['gpt-4o-mini','',0],['claude-haiku','',0]].forEach(([n,d,on])=>{const r=el('div');r.append(el('span',on?'c-ok':'faint',on?'● ':'○ '),el('span','mono',n),el('span','dim','  '+d));c.append(r)});return}
+  if(l==='/config'){const c=add(el('div','card'));c.style.cssText='padding:8px 12px;display:grid;grid-template-columns:auto 1fr;gap:2px 20px';[['model','qwen3-coder'],['base','http://localhost:11434/v1'],['skills','/skills'],['mcp','/install']].forEach(([a,b])=>c.append(el('span','dim',a),el('span','mono',b)));return}
+  if(l==='/skills'){const c=add(el('div','card'));c.style.padding='4px';['code-review','test-writer','repo-explorer'].forEach(n=>{const r=el('div','row');r.append(el('span','ico','◈'),el('span','tt mono',n),badge('ok','installed'));c.append(r)});return}
+  if(l==='/sessions')return add(el('div','ai dim','1 active · lq-core (act) · 2 archived'));
+  const k={'/fix':'fix','/explore':'explore','/commit':'commit','/install':'install','/mcp':'install'}[l]||(/fix|failing test/.test(l)?'fix':/explore|architecture/.test(l)?'explore':/commit/.test(l)?'commit':/mcp/.test(l)?'install':null);
+  if(k)return play(k);
+  /* anything else becomes a queued task, linked after the previous one */
+  const prev=QUE[QUE.length-1],q=addQ(s.length>48?s.slice(0,47)+'…':s,'queued');
+  add(el('div','ai')).append('Queued as ',Object.assign(el('code','','#'+q.id)),prev?' — it starts after #'+prev.id+' finishes.':'.');
+  toast('Added to queue');
+}
+
+/* ---------- composer ---------- */
+function grow(){Q.style.height='auto';Q.style.height=Math.min(Q.scrollHeight,200)+'px';setSt()}
+Q.addEventListener('input',grow);
+function send(){if(busy){abort=true;pend&&pend.decide(false);return}const v=Q.value;if(!v.trim())return;Q.value='';grow();
+  if(v.startsWith('!')){$('#empty')?.remove();msg(v);return add(el('div','ai dim mono','mock shell: '+v.slice(1)))}
+  cmd(v)}
+$('#go').onclick=send;
+Q.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!busy)send()}
+  if(e.key==='ArrowUp'&&!Q.value&&hi>0){e.preventDefault();Q.value=hist[--hi];grow()}
+  if(e.key==='ArrowDown'&&hi<hist.length&&Q.value===hist[hi]){e.preventDefault();hi++;Q.value=hist[hi]||'';grow()}
+});
+$$('#mode button').forEach(b=>b.onclick=()=>{$$('#mode button').forEach(x=>x.classList.toggle('on',x===b));toast('Mode: '+b.dataset.m)});
+const MODELS=['qwen3-coder','gpt-4o-mini','claude-haiku'];let mi=0;
+$('#mdl').onclick=()=>{mi=(mi+1)%MODELS.length;$('#mdl').firstChild.textContent=MODELS[mi]+' ';$('#smd').textContent=MODELS[mi];toast('Model: '+MODELS[mi])};
+$('#att').onclick=()=>toast('Attachments: not in this mockup');
+
+/* ---------- command palette ---------- */
+let palIsOpen=false,palQuery='',palIdx=0;
+const palItems=()=>{const q=palQuery.toLowerCase().replace(/^\//,'');return CM.filter(c=>!q||c[0].toLowerCase().includes(q)||c[1].toLowerCase().includes(q))};
+function palRender(){const o=$('#pal-o');o.replaceChildren();palItems().forEach((c,i)=>{const r=el('div','pal-i'+(i===palIdx?' on':''));r.append(el('span','c',c[0]),el('span','dim',c[1]));r.onclick=()=>palExec(c);o.append(r)})}
+function palOpen_(){palIsOpen=true;palQuery='';palIdx=0;$('#pal').style.display='flex';const l=$('#pal-l');l.value='';palRender();l.focus()}
+function palClose_(){palIsOpen=false;$('#pal').style.display='none';Q.focus()}
+function palExec(c){palClose_();if(!busy)cmd(c[0])}
+$('#pal-l').addEventListener('input',e=>{palQuery=e.target.value;palIdx=0;palRender()});
+$('#pal').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();palClose_()}
+  if(e.key==='ArrowDown'){e.preventDefault();palIdx=Math.min(palIdx+1,palItems().length-1);palRender()}
+  if(e.key==='ArrowUp'){e.preventDefault();palIdx=Math.max(palIdx-1,0);palRender()}
+  if(e.key==='Enter'){e.preventDefault();const n=palItems();if(n[palIdx])palExec(n[palIdx])}
+});
+$('#pal').addEventListener('mousedown',e=>{if(e.target.id==='pal')palClose_()});
+
+addEventListener('keydown',e=>{
+  const m=e.metaKey||e.ctrlKey;
+  if(e.key==='Escape'&&busy&&!palIsOpen){abort=true;pend&&pend.decide(false)}
+  if(pend&&!palIsOpen&&!m&&!Q.value&&(e.key==='y'||e.key==='n')){e.preventDefault();pend.decide(e.key==='y')}
+  if(m&&e.key==='k'){e.preventDefault();Q.focus()}
+  if(m&&e.key==='p'){e.preventDefault();if(!busy&&!palIsOpen)palOpen_()}
+  if(m&&e.key==='n'){e.preventDefault();if(!busy)newThread()}
+  if(m&&e.key==='b'){e.preventDefault();panel('sb')}
+});
+
+drawQueue();showEmpty();setSt();
+if(matchMedia('(pointer: fine)').matches)Q.focus();
+</script>
+</body>
+</html>

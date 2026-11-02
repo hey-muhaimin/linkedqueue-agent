@@ -75,15 +75,10 @@ window.harness = {
   await win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   await new Promise(r => setTimeout(r, 1200));
 
-  const views = ['filesystem', 'sessions', 'tools', 'plugins', 'skills', 'mcp', 'memory', 'agents', 'chat'];
   const checks = [];
-  for (const v of views) {
-    await win.webContents.executeJavaScript(`document.querySelector('.nav-btn[data-view="${v}"]').click()`);
-    await new Promise(r => setTimeout(r, 300));
-      const visible = v === 'chat'
-      ? await win.webContents.executeJavaScript(`document.getElementById('feed').style.display !== 'none'`)
-      : await win.webContents.executeJavaScript(`!!document.querySelector('#view-${v}') && document.querySelector('#view-${v}').style.display !== 'none'`);
-    checks.push([v, visible]);
+  for (const id of ['sb','mn','rp','q','go']) {
+    const visible = await win.webContents.executeJavaScript(`!!document.getElementById('${id}')`);
+    checks.push([id, visible]);
   }
 
   // palette open/close

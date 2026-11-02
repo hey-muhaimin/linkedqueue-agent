@@ -1,215 +1,316 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
-  <title>linkedqueue — terminal</title>
-  <link rel="stylesheet" href="tokens.css">
-  <link rel="stylesheet" href="main.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LinkedQueue — desktop mockup</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232a8f62'/%3E%3Cg transform='translate(4 4) scale(.8333)' fill='white'%3E%3Cpath d='M7 4.5h5v5M14.5 12h5v5' fill='none' stroke='white' stroke-width='2'/%3E%3Crect x='2' y='2' width='5' height='5'/%3E%3Crect x='9.5' y='9.5' width='5' height='5' opacity='.6'/%3E%3Crect x='17' y='17' width='5' height='5' opacity='.3'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#ffffff;--side:#f6f6f4;--card:#fafaf8;--fg:#1f1f1e;--dim:#6b6b68;--faint:#a5a5a1;--line:#e6e6e2;--hover:#ededea;--press:#e2e2de;
+  --ac:#2a8f62;--acfg:#ffffff;
+  --ok:#1f7a3d;--warn:#9a6700;--err:#c0392b;--info:#2563c4;
+  --addbg:rgba(31,122,61,.09);--delbg:rgba(192,57,43,.09);
+  --r1:6px;--r2:10px;--r3:14px;
+  --shadow:0 8px 30px rgba(0,0,0,.14);
+  --sans:var(--mono);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c1b;--side:#151514;--card:#222221;--fg:#e9e9e6;--dim:#92928d;--faint:#5c5c58;--line:#2e2e2c;--hover:#272726;--press:#303030;--ac:#4cc38a;--acfg:#0d1f16;--ok:#5fcf80;--warn:#e0b04a;--err:#ff7b72;--info:#7aa7ff;--addbg:rgba(95,207,128,.10);--delbg:rgba(255,123,114,.10);--shadow:0 8px 30px rgba(0,0,0,.5)}}
+:root[data-theme="dark"]{--bg:#1c1c1b;--side:#151514;--card:#222221;--fg:#e9e9e6;--dim:#92928d;--faint:#5c5c58;--line:#2e2e2c;--hover:#272726;--press:#303030;--ac:#4cc38a;--acfg:#0d1f16;--ok:#5fcf80;--warn:#e0b04a;--err:#ff7b72;--info:#7aa7ff;--addbg:rgba(95,207,128,.10);--delbg:rgba(255,123,114,.10);--shadow:0 8px 30px rgba(0,0,0,.5)}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--mono);font-size:13px;line-height:1.6;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input,textarea{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+::selection{background:color-mix(in srgb,var(--ac) 30%,transparent)}
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.mono{font-family:var(--mono)}
+.dim{color:var(--dim)}.faint{color:var(--faint)}.b{font-weight:600}
+.c-ok{color:var(--ok)}.c-warn{color:var(--warn)}.c-err{color:var(--err)}.c-info{color:var(--info)}.c-ac{color:var(--ac)}.c-faint{color:var(--faint)}
+.sp{flex:1}
+
+/* ============ PRIMITIVES ============ */
+.ib{width:28px;height:28px;border-radius:var(--r1);display:inline-flex;align-items:center;justify-content:center;color:var(--dim);flex:none;font-size:15px}
+.ib:hover{background:var(--hover);color:var(--fg)}.ib:active{background:var(--press)}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:0 8px;font-size:11px;font-weight:600;line-height:18px;background:color-mix(in srgb,currentColor 14%,transparent);letter-spacing:.02em;white-space:nowrap}
+.kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font:11px/17px var(--mono);color:var(--dim);background:var(--card)}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:var(--r1);padding:5px 12px;font-weight:500;border:1px solid var(--line);background:var(--bg)}
+.btn:hover{background:var(--hover)}.btn:active{background:var(--press)}
+.btn.pri{background:var(--ac);color:var(--acfg);border-color:transparent}.btn.pri:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:transparent;background:none;color:var(--dim)}.btn.ghost:hover{background:var(--hover);color:var(--fg)}
+.btn .kbd{background:transparent;color:inherit;opacity:.75;border-color:currentColor}
+.callout{display:flex;gap:8px;border-radius:var(--r1);padding:6px 10px;font-size:13px;background:color-mix(in srgb,var(--c) 10%,transparent);color:var(--fg);margin-top:8px}
+.callout::before{content:"!";font-weight:700;color:var(--c);width:1.2em;flex:none}
+.callout.warn{--c:var(--warn)}.callout.err{--c:var(--err)}.callout.info{--c:var(--info)}.callout.ok{--c:var(--ok)}
+.card{border:1px solid var(--line);border-radius:var(--r2);background:var(--card)}
+.spin{display:inline-block;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ============ WINDOW CHROME ============ */
+.tb{height:42px;flex:none;display:flex;align-items:center;gap:6px;padding:0 10px 0 14px;background:var(--side);border-bottom:1px solid var(--line);user-select:none}
+.lights{display:flex;gap:8px;margin-right:10px}
+.lights i{width:12px;height:12px;border-radius:50%;display:block}
+.lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+.crumb{display:flex;align-items:center;gap:8px;min-width:0;color:var(--dim)}
+.crumb b{color:var(--fg);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--fg);margin-right:6px;white-space:nowrap}
+.lg{width:18px;height:18px;flex:none;color:var(--ac)}.lg.sm{width:14px;height:14px}
+#empty .mark .lg{width:30px;height:30px;color:var(--acfg)}
+#app{flex:1;display:flex;min-height:0;position:relative}
+
+/* ============ SIDEBAR ============ */
+#sb{width:260px;flex:none;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#sb .top{padding:10px 10px 4px;display:flex;flex-direction:column;gap:2px}
+.row{display:flex;align-items:center;gap:10px;padding:5px 10px;border-radius:var(--r1);width:100%;color:var(--fg)}
+.row:hover{background:var(--hover)}.row.on{background:var(--press)}
+.row .ico{width:16px;text-align:center;color:var(--dim);flex:none}
+.row .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .meta{color:var(--faint);font-size:12px}
+.row.new{font-weight:600}
+.sh{padding:14px 20px 4px;color:var(--faint);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between}
+#threads,#lib{padding:0 10px;display:flex;flex-direction:column;gap:1px}
+.proj{font-weight:600}
+.th .dot{width:16px;text-align:center;flex:none;font-size:12px}
+#sb .scroll{flex:1;overflow:auto;min-height:0}
+.me{border-top:1px solid var(--line);padding:8px 10px;display:flex;align-items:center;gap:10px}
+.av{width:26px;height:26px;border-radius:50%;background:var(--ac);color:var(--acfg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex:none}
+
+/* ============ CONVERSATION ============ */
+#mn{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg)}
+#feed{flex:1;overflow:auto;min-height:0;scroll-behavior:smooth}
+#conv{max-width:780px;margin:0 auto;padding:28px 24px 12px;display:flex;flex-direction:column;gap:14px}
+.user{align-self:flex-end;max-width:84%;background:var(--hover);border-radius:var(--r3);border-bottom-right-radius:4px;padding:8px 14px;white-space:pre-wrap;word-break:break-word}
+.ai{white-space:pre-wrap;word-break:break-word}
+.ai code,.callout code{font:12.5px var(--mono);background:var(--hover);padding:1px 5px;border-radius:4px}
+.ai.head{font-weight:600}
+#empty{margin:9vh auto 0;text-align:center;max-width:620px}
+#empty .mark{width:44px;height:44px;border-radius:12px;background:var(--ac);color:var(--acfg);display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+#empty h1{font-size:24px;line-height:1.25;margin:0 0 4px;font-weight:600;letter-spacing:-.01em}
+#empty p{margin:0 0 22px;color:var(--dim)}
+.sug{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+.sug button{border:1px solid var(--line);border-radius:var(--r2);padding:12px 14px;background:var(--card);display:flex;flex-direction:column;gap:2px}
+.sug button:hover{background:var(--hover);border-color:var(--faint)}
+.sug b{font-weight:600}.sug span{color:var(--dim);font-size:13px}
+@media(max-width:560px){.sug{grid-template-columns:1fr}}
+
+/* tool rows */
+.tl{display:flex;flex-direction:column}
+.tl>button{display:flex;align-items:center;gap:8px;padding:3px 8px;margin:0 -8px;border-radius:var(--r1);color:var(--dim);font-size:13px;width:calc(100% + 16px)}
+.tl>button:hover{background:var(--hover);color:var(--fg)}
+.tl .ti{width:16px;text-align:center;flex:none}
+.tl .tn{font-family:var(--mono);color:var(--fg);font-size:12.5px}
+.tl .ta{font-family:var(--mono);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36ch}
+.tl .sum{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--faint)}
+.tl .chev{color:var(--faint);transition:transform .12s;flex:none}
+.tl.open .chev{transform:rotate(90deg)}
+.tl .out{display:none;margin:4px 0 2px 24px;padding:8px 12px;font:12.5px/1.55 var(--mono);color:var(--dim);overflow-x:auto;white-space:pre}
+.tl.open .out{display:block}
+
+/* plan card */
+.plan{padding:10px 14px;cursor:pointer}
+.plan .ph{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-weight:600}
+.pbar{flex:1;height:4px;border-radius:2px;background:var(--line);overflow:hidden;max-width:160px}.pbar i{display:block;height:100%;background:var(--ac);transition:width .25s}
+.pi{display:flex;gap:10px;padding:1px 0;color:var(--faint)}.pi .g{width:16px;text-align:center;flex:none}
+.pi.done{color:var(--dim)}.pi.done .g{color:var(--ok)}.pi.now{color:var(--fg);font-weight:500}.pi.now .g{color:var(--ac)}
+.plan.collapsed .pi:not(.now){display:none}
+
+/* approval */
+.ask{border:1px solid var(--rc,var(--line));border-radius:var(--r2);background:var(--card);overflow:hidden}
+.ask.lvl-warn{--rc:color-mix(in srgb,var(--warn) 55%,var(--line))}.ask.lvl-err{--rc:color-mix(in srgb,var(--err) 60%,var(--line))}
+.ask .ah{display:flex;align-items:center;gap:10px;padding:10px 14px}
+.ask .ah .shield{font-size:15px}
+.ask .ab{padding:0 14px 4px}
+.ask pre.code,.ask .dcard{margin:0 0 8px;padding:8px 12px;border-radius:var(--r1);background:var(--bg);border:1px solid var(--line);font:12.5px/1.55 var(--mono);overflow-x:auto}
+.ask .dcard{padding:0;overflow:hidden}
+.ask .dcard .fh{padding:4px 12px;border-bottom:1px solid var(--line);color:var(--dim);font:12px var(--mono)}
+.ask .af{display:flex;justify-content:flex-end;gap:8px;padding:8px 14px 12px;flex-wrap:wrap}
+.ask.done .af{display:none}.ask.done{opacity:.82}
+.ask .res{padding:0 14px 12px;font-weight:600}
+
+/* file card + diff */
+.fc{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer}
+.fc:hover{background:var(--hover)}
+.fc .fi{color:var(--info)}.fc .nm{font-weight:600}.fc .pl{color:var(--ok);font:12px var(--mono)}.fc .mi{color:var(--err);font:12px var(--mono)}
+.dl{display:flex;font:12.5px/1.6 var(--mono);white-space:pre}
+.dl .n{width:4ch;text-align:right;color:var(--faint);padding-right:1ch;flex:none;user-select:none}
+.dl .g{width:2ch;flex:none;color:var(--faint);user-select:none}
+.dl.add{background:var(--addbg)}.dl.add .g{color:var(--ok)}
+.dl.del{background:var(--delbg)}.dl.del .g{color:var(--err)}
+.dl.hunk{color:var(--info)}
+
+.working{display:none;align-items:center;gap:10px;color:var(--dim);padding:2px 0}
+body.busy .working{display:flex}
+.working .shimmer{background:linear-gradient(90deg,var(--dim),var(--fg),var(--dim));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 1.8s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+body.wait .working .shimmer{animation:none;background:none;color:var(--ac)}
+body.wait .working .shimmer::after{content:" · waiting for you"}
+
+/* ============ COMPOSER ============ */
+.cw{flex:none;max-width:780px;width:100%;margin:0 auto;padding:4px 24px 10px}
+.cmp{border:1px solid var(--line);border-radius:var(--r3);background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.04);padding:10px 12px 8px;transition:border-color .12s,box-shadow .12s}
+.cmp:focus-within{border-color:var(--faint);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 16%,transparent)}
+#q{display:block;width:100%;resize:none;border:0;background:none;outline:0;max-height:200px;line-height:1.5;padding:2px 2px 8px}
+#q::placeholder{color:var(--faint)}
+.cf{display:flex;align-items:center;gap:6px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.seg button{padding:2px 10px;font-size:12.5px;color:var(--dim)}
+.seg button.on{background:var(--press);color:var(--fg);font-weight:600}
+.seg button:not(.on):hover{background:var(--hover)}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:2px 8px;font-size:12.5px;color:var(--dim)}
+.pill:hover{background:var(--hover);color:var(--fg)}
+.qpill{display:none;align-items:center;gap:6px;border-radius:8px;padding:2px 8px;font-size:12.5px;color:var(--dim)}
+.qpill b{color:var(--ac)}
+.qpill.on{display:inline-flex}
+.send{width:30px;height:30px;border-radius:50%;background:var(--ac);color:var(--acfg);display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none}
+.send:hover{filter:brightness(1.08)}
+.send[disabled]{background:var(--press);color:var(--faint);cursor:default;filter:none}
+body.busy .send{background:var(--fg);color:var(--bg)}
+.hint{display:flex;gap:14px;color:var(--faint);font-size:12px;padding:6px 6px 0;flex-wrap:wrap}
+
+/* ============ RIGHT PANEL ============ */
+#rp{width:360px;flex:none;border-left:1px solid var(--line);background:var(--bg);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);flex:none}
+.tabs button{padding:6px 12px;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;gap:6px;align-items:center}
+.tabs button:hover{color:var(--fg)}.tabs button.on{color:var(--fg);border-color:var(--ac);font-weight:600}
+.tabs .n{font-size:11px;background:var(--hover);border-radius:99px;padding:0 6px;color:var(--dim)}
+.pane{display:none;flex:1;min-height:0;overflow:auto;padding:10px}.pane.on{display:flex;flex-direction:column;gap:8px}
+.pane .empty{color:var(--faint);padding:20px 8px;text-align:center;white-space:pre-line}
+#viewer{display:none;border:1px solid var(--line);border-radius:var(--r2);overflow:hidden;background:var(--card);flex:1;min-height:160px;flex-direction:column}
+#viewer.on{display:flex}
+#viewer .vh{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-weight:600}
+#viewer .vb{overflow:auto;flex:1;padding:6px 0}
+
+/* queue (linked tasks) */
+.qi{padding:8px 12px;display:flex;gap:10px;align-items:flex-start;position:relative}
+.qi .qg{width:16px;text-align:center;flex:none;margin-top:1px}
+.qi .qt{flex:1;min-width:0}
+.qi .qd{color:var(--faint);font-size:12px}
+.qlink{width:2px;height:10px;background:var(--line);margin:-8px 0 -8px 22px;flex:none}
+
+/* ============ STATUS BAR ============ */
+.sbar{height:26px;flex:none;display:flex;align-items:center;gap:16px;padding:0 12px;background:var(--side);border-top:1px solid var(--line);color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden}
+#sd{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}
+body.busy #sd{background:var(--warn)}body.wait #sd{background:var(--ac)}
+
+/* ============ TOAST + PALETTE ============ */
+#toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,8px);background:var(--fg);color:var(--bg);padding:6px 14px;border-radius:99px;z-index:70;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;font-size:13px;max-width:80vw}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#pal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;align-items:flex-start;justify-content:center;padding-top:14vh}
+#pal .box{width:min(580px,92vw);background:var(--bg);border:1px solid var(--line);border-radius:var(--r3);box-shadow:var(--shadow);display:flex;flex-direction:column;max-height:64vh;overflow:hidden}
+#pal-l{border:0;outline:0;background:none;padding:14px 16px;border-bottom:1px solid var(--line);font-size:15px}
+#pal-o{overflow:auto;padding:6px}
+.pal-i{display:flex;justify-content:space-between;gap:12px;padding:7px 10px;border-radius:var(--r1);cursor:pointer}
+.pal-i.on,.pal-i:hover{background:var(--press)}
+.pal-i .c{font-family:var(--mono);font-size:13px}
+#pal .ft{padding:6px 14px;border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+#scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:30}
+
+/* ============ RESPONSIVE ============ */
+body.hide-sb #sb{display:none}
+body.hide-rp #rp{display:none}
+@media(max-width:959px){
+  #rp{display:none;position:fixed;top:42px;bottom:26px;right:0;z-index:40;width:min(380px,92vw);box-shadow:var(--shadow)}
+  body.show-rp #rp{display:flex}
+  body.show-rp #scrim{display:block}
+}
+@media(max-width:719px){
+  #sb{display:none;position:fixed;top:42px;bottom:26px;left:0;z-index:40;width:min(300px,86vw);box-shadow:var(--shadow)}
+  body.show-sb #sb{display:flex}
+  body.show-sb #scrim{display:block}
+  .lights{display:none}
+  .hint{display:none}
+  .brand span{display:none}
+  #conv{padding:18px 14px 8px}.cw{padding:4px 12px 8px}
+  .sbar .opt{display:none}
+}
+@media(pointer:coarse){#q{font-size:16px}.row{padding:9px 10px}.ib{width:36px;height:36px}.btn{padding:9px 14px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
 </head>
 <body>
-  <div class="top">
-    <b>linkedqueue</b>
-    <span class="sub">versatile agent · terminal</span>
-    <span class="status-pill" id="status-pill"><span id="sd">●</span> <span id="ss">ready</span></span>
-    <span class="sp"></span>
-    <div class="top-actions">
-      <button class="tx" id="modelBtn" title="Model">[model:<span id="curModel">gemma4:31b</span>]</button>
-      <button class="tx" id="modeBtn" title="Mode">[mode:<span id="curMode">plan</span>]</button>
-      <button class="tx" id="autoBtn" title="Auto-approve">[<span id="auto-approve">ask</span>]</button>
-      <button class="tx" id="th" aria-label="Toggle theme">[theme]</button>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="lq" viewBox="0 0 24 24"><path d="M7 4.5h5v5M14.5 12h5v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/><rect x="2" y="2" width="5" height="5" fill="currentColor"/><rect x="9.5" y="9.5" width="5" height="5" fill="currentColor" opacity=".6"/><rect x="17" y="17" width="5" height="5" fill="currentColor" opacity=".3"/></symbol></svg>
+
+<header class="tb">
+  <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+  <button class="ib" id="tsb" aria-label="Toggle sidebar" title="Sidebar (ctrl+b)">◧</button>
+  <div class="brand"><svg class="lg" aria-hidden="true"><use href="#lq"/></svg><span>LinkedQueue</span></div>
+  <div class="crumb"><span class="faint">/</span><span>lq-core</span><span class="faint">›</span><b id="ttl">New thread</b></div>
+  <span class="sp"></span>
+  <button class="ib" id="pk" aria-label="Command palette" title="Command palette (ctrl+p)">⌕</button>
+  <button class="ib" id="th" aria-label="Toggle theme" title="Toggle theme">◐</button>
+  <button class="ib" id="trp" aria-label="Toggle review panel" title="Review panel">◨</button>
+</header>
+
+<div id="app">
+  <aside id="sb" aria-label="Threads">
+    <div class="top">
+      <button class="row new" id="newth"><span class="ico">＋</span><span class="tt">New thread</span><span class="kbd">ctrl+n</span></button>
+      <button class="row" id="srch"><span class="ico">⌕</span><span class="tt dim">Search commands</span><span class="kbd">ctrl+p</span></button>
     </div>
-  </div>
-
-  <div class="cols">
-    <aside id="lr">
-      <div class="rh">navigation</div>
-      <button class="ri nav-btn active" data-view="chat"><span>chat</span><span class="dim">feed</span></button>
-      <button class="ri nav-btn" data-view="filesystem"><span>filesystem</span><span class="dim">workspace</span></button>
-      <button class="ri nav-btn" data-view="sessions"><span>sessions</span><span class="dim" id="nav-sessions">0</span></button>
-      <button class="ri nav-btn" data-view="tools"><span>tools</span><span class="dim">builtins</span></button>
-      <button class="ri nav-btn" data-view="plugins"><span>plugins</span><span class="dim">ext</span></button>
-      <button class="ri nav-btn" data-view="skills"><span>skills</span><span class="dim">load</span></button>
-      <button class="ri nav-btn" data-view="mcp"><span>mcp</span><span class="dim">servers</span></button>
-      <button class="ri nav-btn" data-view="memory"><span>memory</span><span class="dim">store</span></button>
-      <button class="ri nav-btn" data-view="agents"><span>agents</span><span class="dim">sub/handoff</span></button>
-      <button class="ri nav-btn" data-view="permissions"><span>permissions</span><span class="dim">allow/ask/deny</span></button>
-
-      <div class="rh">session</div>
-      <div class="ri"><span class="dim">id</span><span id="lsid">—</span></div>
-      <div class="ri"><span class="dim">status</span><span id="ls">ready</span></div>
-      <div class="ri"><span class="dim">state</span><span id="lstate">idle</span></div>
-      <div class="ri"><span class="dim">tool calls</span><span id="ltc">0</span></div>
-
-      <div class="rh">keys</div>
-      <div class="ri"><span>@ file</span><span class="dim">reference</span></div>
-      <div class="ri"><span>! cmd</span><span class="dim">shell</span></div>
-      <div class="ri"><span>/ cmd</span><span class="dim">slash</span></div>
-      <div class="ri"><span>y / n</span><span class="dim">approve</span></div>
-      <div class="ri"><span>esc</span><span class="dim">interrupt</span></div>
-      <div class="ri"><span>↑ ↓</span><span class="dim">history</span></div>
-      <div class="ri"><span>ctrl+k</span><span class="dim">focus input</span></div>
-      <div class="ri"><span>ctrl+b</span><span class="dim">sidebar</span></div>
-      <div class="ri"><span>ctrl+p</span><span class="dim">command palette</span></div>
-    </aside>
-
-    <main id="mn">
-      <div id="feed" role="log" aria-live="polite">
-        <div id="t"></div>
-        <div id="w"><span id="sp">⠋</span> <span id="wt">working</span><span class="sp"></span></div>
+    <div class="scroll">
+      <div class="sh"><span>Projects</span></div>
+      <div id="threads">
+        <div class="row proj"><span class="ico">▾</span><span class="tt">lq-core</span></div>
       </div>
-
-      <div class="view-panel" id="view-filesystem" style="display:none">
-        <div class="panel-header">filesystem · workspace</div>
-        <div class="panel-actions">
-          <span class="dim">path</span> <input id="fs-path" placeholder="relative path" style="width:150px">
-          <button class="btn" id="fs-refresh">[refresh]</button>
-        </div>
-        <div id="fs-tree" class="panel-content"></div>
-      </div>
-
-      <div class="view-panel" id="view-sessions" style="display:none">
-        <div class="panel-header">sessions</div>
-        <div class="panel-actions">
-          <button class="btn" id="btn-new-session">[new session]</button>
-          <button class="btn" id="btn-refresh-sessions">[refresh]</button>
-        </div>
-        <div id="session-list" class="panel-content"></div>
-      </div>
-
-      <div class="view-panel" id="view-tools" style="display:none">
-        <div class="panel-header">tools · registered</div>
-        <div id="tools-list" class="panel-content"></div>
-      </div>
-
-      <div class="view-panel" id="view-plugins" style="display:none">
-        <div class="panel-header">plugins</div>
-        <div class="panel-actions">
-          <span class="dim">url</span> <input id="plugin-url" placeholder="https://.../plugin.js" style="width:220px">
-          <span class="dim">name</span> <input id="plugin-name" placeholder="name" style="width:120px">
-          <button class="btn" id="plugin-install">[install]</button>
-          <button class="btn" id="plugin-reload">[reload]</button>
-        </div>
-        <div id="plugin-list" class="panel-content"></div>
-      </div>
-
-      <div class="view-panel" id="view-skills" style="display:none">
-        <div class="panel-header">skills</div>
-        <div class="panel-actions">
-          <span class="dim">url</span> <input id="skill-url" placeholder="https://.../SKILL.md" style="width:220px">
-          <span class="dim">name</span> <input id="skill-name" placeholder="name" style="width:120px">
-          <button class="btn" id="skill-install">[install]</button>
-        </div>
-        <div id="skill-list" class="panel-content"></div>
-      </div>
-
-      <div class="view-panel" id="view-mcp" style="display:none">
-        <div class="panel-header">mcp servers</div>
-        <div class="panel-actions">
-          <span class="dim">name</span> <input id="mcp-name" placeholder="name" style="width:120px">
-          <span class="dim">command</span> <input id="mcp-command" placeholder="npx" style="width:120px">
-          <span class="dim">args</span> <input id="mcp-args" placeholder="-y @modelcontextprotocol/server-filesystem" style="width:220px">
-          <button class="btn" id="mcp-add">[add]</button>
-        </div>
-        <div id="mcp-list" class="panel-content"></div>
-      </div>
-
-      <div class="view-panel" id="view-memory" style="display:none">
-        <div class="panel-header">memory store</div>
-        <div class="panel-actions">
-          <span class="dim">search</span> <input id="memory-q" placeholder="filter memories" style="width:160px">
-          <button class="btn" id="memory-search">[search]</button>
-          <button class="btn" id="memory-clear">[clear]</button>
-        </div>
-        <div class="panel-actions">
-          <span class="dim">text</span> <input id="memory-text" placeholder="remember this…" style="width:260px">
-          <span class="dim">tags</span> <input id="memory-tags" placeholder="tags, comma separated" style="width:160px">
-          <button class="btn" id="memory-add">[add]</button>
-        </div>
-        <div id="memory-list" class="panel-content"></div>
-      </div>
-
-      <div class="view-panel" id="view-agents" style="display:none">
-        <div class="panel-header">agents · subagents / handoff</div>
-        <div class="panel-actions">
-          <span class="dim">name</span> <input id="agent-name" placeholder="subagent name" style="width:140px">
-          <span class="dim">model</span> <input id="agent-model" placeholder="qwen3-coder" style="width:120px">
-          <button class="btn" id="agent-start">[start]</button>
-        </div>
-        <div class="panel-actions">
-          <span class="dim">task</span> <input id="agent-task" placeholder="what should it do" style="width:340px">
-        </div>
-        <div id="agent-list" class="panel-content"></div>
-      </div>
-
-      <div class="view-panel" id="view-permissions" style="display:none">
-        <div class="panel-header">permissions · allow / ask / deny</div>
-        <div class="panel-actions">
-          <label style="display:flex;align-items:center;gap:6px">
-            <input type="checkbox" id="auto-approve-toggle">
-            <span>auto-approve (approve non-denied tools automatically)</span>
-          </label>
-        </div>
-        <div id="perm-list" class="panel-content"></div>
-      </div>
-
-      <div class="chips" id="chips"></div>
-      <div id="ac"></div>
-      <div class="in">
-        <b>›</b>
-        <input id="q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="message or /help" aria-label="Message LinkedQueue">
-      </div>
-    </main>
-
-    <aside id="rr">
-      <div class="rh">plan</div>
-      <div id="rp"></div>
-      <div class="rh">files</div>
-      <div id="rf"></div>
-      <div class="rh">experiments</div>
-      <div id="re"></div>
-      <div id="rv">
-        <div class="rh"><span id="rvt"></span><button class="tx" id="rvx" aria-label="Close viewer">[x]</button></div>
-        <pre id="rvb"></pre>
-      </div>
-    </aside>
-  </div>
-
-  <div class="st">
-    <span><span id="sd">●</span> <span id="sst">ready</span></span>
-    <span id="sn">0 tools</span>
-    <span class="sp"></span>
-    <span class="kb">@ file · ! shell · / commands · y/n approve · esc interrupt · ctrl+k focus · ctrl+b sidebar · ctrl+p palette</span>
-  </div>
-
-  <div id="diffModal" class="modal" style="display:none">
-    <div class="modal-content" style="width:min(90vw,1000px);max-height:80vh;display:flex;flex-direction:column">
-      <div class="modal-header">diff <span id="diffTitle" style="margin-left:1ch"></span><button class="tx" id="diffClose" aria-label="Close">[x]</button></div>
-      <div id="diffBody" style="flex:1;overflow:auto;padding:12px"></div>
-      <div class="modal-actions" style="justify-content:flex-end"><button class="btn" id="diffDone">[done]</button></div>
+      <div class="sh"><span>Library</span></div>
+      <div id="lib"></div>
     </div>
-  </div>
+    <div class="me"><div class="av">D</div><div style="min-width:0"><div class="b" style="line-height:1.2">dev</div><div class="faint" style="font-size:12px">local · qwen3-coder</div></div><span class="sp"></span><button class="ib" id="cfg" aria-label="Settings" title="Config">⚙</button></div>
+  </aside>
 
-  <div id="approvalModal" class="modal" style="display:none">
-    <div class="modal-content">
-      <div class="modal-header">approval required</div>
-      <div id="approvalBody"></div>
-      <div class="modal-actions">
-        <button class="btn" id="approvalReject">[n] reject</button>
-        <button class="btn primary" id="approvalApprove">[y] approve</button>
+  <main id="mn">
+    <div id="feed" role="log" aria-live="polite"><div id="conv"></div></div>
+    <div class="cw">
+      <div class="cmp">
+        <textarea id="q" rows="1" placeholder="Ask LinkedQueue to build, fix, or explain…  /  for commands" aria-label="Message LinkedQueue" autocomplete="off" spellcheck="false" enterkeyhint="send"></textarea>
+        <div class="cf">
+          <button class="ib" id="att" aria-label="Attach" title="Attach">＋</button>
+          <div class="seg" id="mode" role="group" aria-label="Mode"><button data-m="Ask">Ask</button><button data-m="Plan">Plan</button><button data-m="Act" class="on">Act</button></div>
+          <span class="sp"></span>
+          <span class="qpill" id="qp" title="Tasks waiting in the queue"><svg class="lg sm" aria-hidden="true"><use href="#lq"/></svg> <b id="qn">0</b> queued</span>
+          <button class="pill" id="mdl" title="Switch model">qwen3-coder <span class="faint">▾</span></button>
+          <button class="send" id="go" aria-label="Send" disabled>↑</button>
+        </div>
       </div>
+      <div class="hint"><span><span class="kbd">enter</span> send</span><span><span class="kbd">shift+enter</span> newline</span><span><span class="kbd">y</span> <span class="kbd">n</span> approve / reject</span><span><span class="kbd">esc</span> stop</span></div>
     </div>
-  </div>
+  </main>
 
-  <div id="pal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:50;align-items:flex-start;justify-content:center">
-    <div style="width:min(560px,92vw);background:var(--bg);border:1px solid var(--fg);padding:10px 14px">
-      <div id="pal-t" class="b" style="padding:4px 0 8px"> commands</div>
-      <div id="pal-o"></div>
-      <div class="dim" style="padding-top:6px;font-size:.85em">up/down navigate - enter run - esc close</div>
+  <aside id="rp" aria-label="Review panel">
+    <div class="tabs" role="tablist">
+      <button class="on" data-tab="plan" role="tab">Plan</button>
+      <button data-tab="files" role="tab">Changes <span class="n" id="nf">0</span></button>
+      <button data-tab="queue" role="tab">Queue <span class="n" id="ne">0</span></button>
+      <span class="sp"></span>
+      <button class="ib" id="crp" aria-label="Close panel" style="margin-bottom:2px">✕</button>
     </div>
-  </div>
+    <div class="pane on" id="p-plan"><div class="empty">No plan yet.
+Run a command to see steps.</div></div>
+    <div class="pane" id="p-files"><div id="flist"></div><div id="viewer"><div class="vh"><span id="vt" class="mono" style="font-size:13px"></span><span class="sp"></span><span class="badge c-ok" id="vbadge">new file</span></div><div class="vb" id="vb"></div></div><div class="empty" id="fe">No changes yet.</div></div>
+    <div class="pane" id="p-queue"></div>
+  </aside>
+</div>
 
-  <script src="main.js"></script>
+<footer class="sbar">
+  <span><span id="sd"></span><span id="ss">ready</span></span>
+  <span id="sn">0 tool calls</span>
+  <span class="opt">⎇ main</span>
+  <span class="sp"></span>
+  <span class="opt">local · http://localhost:11434</span>
+  <span id="smd">qwen3-coder</span>
+</footer>
+
+<div id="scrim"></div>
+<div id="toast" role="status"></div>
+<div id="pal" role="dialog" aria-label="Command palette"><div class="box"><input id="pal-l" placeholder="Type a command…" autocomplete="off" spellcheck="false" aria-label="Filter commands"><div id="pal-o"></div><div class="ft">↑↓ navigate · enter run · esc close</div></div></div>
+
+<script src="main.js"></script>
+
 </body>
 </html>
