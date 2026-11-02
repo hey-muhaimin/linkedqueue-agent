@@ -1,0 +1,55 @@
+const { contextBridge } = require('electron');
+contextBridge.exposeInMainWorld('harness', {
+  run: () => Promise.resolve(),
+  approve: () => {},
+  execute: () => Promise.resolve({ ok: true }),
+  listSessions: () => Promise.resolve([]),
+  setMode: () => Promise.resolve(),
+  deleteSession: () => Promise.resolve(),
+  newSession: () => Promise.resolve({ sessions: [] }),
+  workspaceFiles: () => Promise.resolve([]),
+  ollama: {
+    models: () => Promise.resolve({ ok: true, models: ['qwen3-coder', 'llama3.1'] }),
+  },
+  plugins: {
+    list: () => Promise.resolve([]),
+    read: () => Promise.resolve(''),
+    reload: () => Promise.resolve({ plugins: [] }),
+    install: () => Promise.resolve({ installed: 'x', tools: [] }),
+    remove: () => Promise.resolve({ ok: true }),
+  },
+  skills: {
+    list: () => Promise.resolve([]),
+    read: () => Promise.resolve(''),
+    install: () => Promise.resolve({ installed: 'x' }),
+    remove: () => Promise.resolve({ ok: true }),
+  },
+  mcp: {
+    list: () => Promise.resolve([]),
+    add: () => Promise.resolve({}),
+    remove: () => Promise.resolve({ ok: true }),
+    connect: () => Promise.resolve({}),
+    disconnect: () => Promise.resolve({}),
+  },
+  memory: {
+    list: () => Promise.resolve([]),
+    add: () => Promise.resolve({}),
+    delete: () => Promise.resolve({ ok: true }),
+    clear: () => Promise.resolve({ removed: 0 }),
+  },
+  tools: { list: () => Promise.resolve([]) },
+  fs: {
+    tree: () => Promise.resolve([]),
+    read: () => Promise.resolve({ path: 'x', content: '' }),
+    write: () => Promise.resolve({ ok: true, path: 'x', bytes: 0 }),
+    delete: () => Promise.resolve({ ok: true }),
+  },
+  agents: {
+    list: () => Promise.resolve([]),
+    start: () => Promise.resolve({ id: 'a', name: 'n' }),
+    cancel: () => Promise.resolve({ ok: true }),
+  },
+  handoff: { create: () => Promise.resolve({ id: 'h', title: 't' }) },
+  onStartup: () => {},
+  onEvent: () => {},
+});

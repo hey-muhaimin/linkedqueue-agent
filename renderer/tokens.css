@@ -1,0 +1,46 @@
+/* Sprig terminal grayscale tokens */
+:root {
+  --bg: #f2f2f2;
+  --fg: #1c1c1c;
+  --dim: #6a6a6a;
+  --faint: #a8a8a8;
+  --line: #cfcfcf;
+  --sel: #e4e4e4;
+  --ibg: #1c1c1c;
+  --ifg: #f2f2f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c;
+    --fg: #d0d0d0;
+    --dim: #7c7c7c;
+    --faint: #4a4a4a;
+    --line: #2a2a2a;
+    --sel: #181818;
+    --ibg: #d0d0d0;
+    --ifg: #0c0c0c;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0c0c;
+  --fg: #d0d0d0;
+  --dim: #7c7c7c;
+  --faint: #4a4a4a;
+  --line: #2a2a2a;
+  --sel: #181818;
+  --ibg: #d0d0d0;
+  --ifg: #0c0c0c;
+}
+
+:root[data-theme="light"] {
+  --bg: #f2f2f2;
+  --fg: #1c1c1c;
+  --dim: #6a6a6a;
+  --faint: #a8a8a8;
+  --line: #cfcfcf;
+  --sel: #e4e4e4;
+  --ibg: #1c1c1c;
+  --ifg: #f2f2f2;
+}

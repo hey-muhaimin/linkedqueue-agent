@@ -1,0 +1,19 @@
+{
+  "name": "sprig",
+  "version": "0.4.0",
+  "description": "Versatile AI agent harness with OpenClaw-style specialist agents \u2014 one TypeScript core behind an Electron UI and CLI.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && electron .",
+    "cli": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "deploy": "vercel --prod --cwd ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "electron": "^33.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

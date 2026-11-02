@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+  <title>sprig — terminal</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+  <div class="top">
+    <b>sprig</b>
+    <span class="sub">versatile agent · terminal</span>
+    <span class="status-pill" id="status-pill"><span id="sd">●</span> <span id="ss">ready</span></span>
+    <span class="sp"></span>
+    <div class="top-actions">
+      <button class="tx" id="modelBtn" title="Model">[model:<span id="curModel">gemma4:31b</span>]</button>
+      <button class="tx" id="modeBtn" title="Mode">[mode:<span id="curMode">plan</span>]</button>
+      <button class="tx" id="autoBtn" title="Auto-approve">[<span id="auto-approve">ask</span>]</button>
+      <button class="tx" id="th" aria-label="Toggle theme">[theme]</button>
+    </div>
+  </div>
+
+  <div class="cols">
+    <aside id="lr">
+      <div class="rh">navigation</div>
+      <button class="ri nav-btn active" data-view="chat"><span>chat</span><span class="dim">feed</span></button>
+      <button class="ri nav-btn" data-view="filesystem"><span>filesystem</span><span class="dim">workspace</span></button>
+      <button class="ri nav-btn" data-view="sessions"><span>sessions</span><span class="dim" id="nav-sessions">0</span></button>
+      <button class="ri nav-btn" data-view="tools"><span>tools</span><span class="dim">builtins</span></button>
+      <button class="ri nav-btn" data-view="plugins"><span>plugins</span><span class="dim">ext</span></button>
+      <button class="ri nav-btn" data-view="skills"><span>skills</span><span class="dim">load</span></button>
+      <button class="ri nav-btn" data-view="mcp"><span>mcp</span><span class="dim">servers</span></button>
+      <button class="ri nav-btn" data-view="memory"><span>memory</span><span class="dim">store</span></button>
+      <button class="ri nav-btn" data-view="agents"><span>agents</span><span class="dim">sub/handoff</span></button>
+      <button class="ri nav-btn" data-view="permissions"><span>permissions</span><span class="dim">allow/ask/deny</span></button>
+
+      <div class="rh">session</div>
+      <div class="ri"><span class="dim">id</span><span id="lsid">—</span></div>
+      <div class="ri"><span class="dim">status</span><span id="ls">ready</span></div>
+      <div class="ri"><span class="dim">state</span><span id="lstate">idle</span></div>
+      <div class="ri"><span class="dim">tool calls</span><span id="ltc">0</span></div>
+
+      <div class="rh">keys</div>
+      <div class="ri"><span>@ file</span><span class="dim">reference</span></div>
+      <div class="ri"><span>! cmd</span><span class="dim">shell</span></div>
+      <div class="ri"><span>/ cmd</span><span class="dim">slash</span></div>
+      <div class="ri"><span>y / n</span><span class="dim">approve</span></div>
+      <div class="ri"><span>esc</span><span class="dim">interrupt</span></div>
+      <div class="ri"><span>↑ ↓</span><span class="dim">history</span></div>
+      <div class="ri"><span>ctrl+k</span><span class="dim">focus input</span></div>
+      <div class="ri"><span>ctrl+b</span><span class="dim">sidebar</span></div>
+      <div class="ri"><span>ctrl+p</span><span class="dim">command palette</span></div>
+    </aside>
+
+    <main id="mn">
+      <div id="feed" role="log" aria-live="polite">
+        <div id="t"></div>
+        <div id="w"><span id="sp">⠋</span> <span id="wt">working</span><span class="sp"></span></div>
+      </div>
+
+      <div class="view-panel" id="view-filesystem" style="display:none">
+        <div class="panel-header">filesystem · workspace</div>
+        <div class="panel-actions">
+          <span class="dim">path</span> <input id="fs-path" placeholder="relative path" style="width:150px">
+          <button class="btn" id="fs-refresh">[refresh]</button>
+        </div>
+        <div id="fs-tree" class="panel-content"></div>
+      </div>
+
+      <div class="view-panel" id="view-sessions" style="display:none">
+        <div class="panel-header">sessions</div>
+        <div class="panel-actions">
+          <button class="btn" id="btn-new-session">[new session]</button>
+          <button class="btn" id="btn-refresh-sessions">[refresh]</button>
+        </div>
+        <div id="session-list" class="panel-content"></div>
+      </div>
+
+      <div class="view-panel" id="view-tools" style="display:none">
+        <div class="panel-header">tools · registered</div>
+        <div id="tools-list" class="panel-content"></div>
+      </div>
+
+      <div class="view-panel" id="view-plugins" style="display:none">
+        <div class="panel-header">plugins</div>
+        <div class="panel-actions">
+          <span class="dim">url</span> <input id="plugin-url" placeholder="https://.../plugin.js" style="width:220px">
+          <span class="dim">name</span> <input id="plugin-name" placeholder="name" style="width:120px">
+          <button class="btn" id="plugin-install">[install]</button>
+          <button class="btn" id="plugin-reload">[reload]</button>
+        </div>
+        <div id="plugin-list" class="panel-content"></div>
+      </div>
+
+      <div class="view-panel" id="view-skills" style="display:none">
+        <div class="panel-header">skills</div>
+        <div class="panel-actions">
+          <span class="dim">url</span> <input id="skill-url" placeholder="https://.../SKILL.md" style="width:220px">
+          <span class="dim">name</span> <input id="skill-name" placeholder="name" style="width:120px">
+          <button class="btn" id="skill-install">[install]</button>
+        </div>
+        <div id="skill-list" class="panel-content"></div>
+      </div>
+
+      <div class="view-panel" id="view-mcp" style="display:none">
+        <div class="panel-header">mcp servers</div>
+        <div class="panel-actions">
+          <span class="dim">name</span> <input id="mcp-name" placeholder="name" style="width:120px">
+          <span class="dim">command</span> <input id="mcp-command" placeholder="npx" style="width:120px">
+          <span class="dim">args</span> <input id="mcp-args" placeholder="-y @modelcontextprotocol/server-filesystem" style="width:220px">
+          <button class="btn" id="mcp-add">[add]</button>
+        </div>
+        <div id="mcp-list" class="panel-content"></div>
+      </div>
+
+      <div class="view-panel" id="view-memory" style="display:none">
+        <div class="panel-header">memory store</div>
+        <div class="panel-actions">
+          <span class="dim">search</span> <input id="memory-q" placeholder="filter memories" style="width:160px">
+          <button class="btn" id="memory-search">[search]</button>
+          <button class="btn" id="memory-clear">[clear]</button>
+        </div>
+        <div class="panel-actions">
+          <span class="dim">text</span> <input id="memory-text" placeholder="remember this…" style="width:260px">
+          <span class="dim">tags</span> <input id="memory-tags" placeholder="tags, comma separated" style="width:160px">
+          <button class="btn" id="memory-add">[add]</button>
+        </div>
+        <div id="memory-list" class="panel-content"></div>
+      </div>
+
+      <div class="view-panel" id="view-agents" style="display:none">
+        <div class="panel-header">agents · subagents / handoff</div>
+        <div class="panel-actions">
+          <span class="dim">name</span> <input id="agent-name" placeholder="subagent name" style="width:140px">
+          <span class="dim">model</span> <input id="agent-model" placeholder="qwen3-coder" style="width:120px">
+          <button class="btn" id="agent-start">[start]</button>
+        </div>
+        <div class="panel-actions">
+          <span class="dim">task</span> <input id="agent-task" placeholder="what should it do" style="width:340px">
+        </div>
+        <div id="agent-list" class="panel-content"></div>
+      </div>
+
+      <div class="view-panel" id="view-permissions" style="display:none">
+        <div class="panel-header">permissions · allow / ask / deny</div>
+        <div class="panel-actions">
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="auto-approve-toggle">
+            <span>auto-approve (approve non-denied tools automatically)</span>
+          </label>
+        </div>
+        <div id="perm-list" class="panel-content"></div>
+      </div>
+
+      <div class="chips" id="chips"></div>
+      <div id="ac"></div>
+      <div class="in">
+        <b>›</b>
+        <input id="q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" placeholder="message or /help" aria-label="Message Sprig">
+      </div>
+    </main>
+
+    <aside id="rr">
+      <div class="rh">plan</div>
+      <div id="rp"></div>
+      <div class="rh">files</div>
+      <div id="rf"></div>
+      <div class="rh">experiments</div>
+      <div id="re"></div>
+      <div id="rv">
+        <div class="rh"><span id="rvt"></span><button class="tx" id="rvx" aria-label="Close viewer">[x]</button></div>
+        <pre id="rvb"></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="st">
+    <span><span id="sd">●</span> <span id="sst">ready</span></span>
+    <span id="sn">0 tools</span>
+    <span class="sp"></span>
+    <span class="kb">@ file · ! shell · / commands · y/n approve · esc interrupt · ctrl+k focus · ctrl+b sidebar · ctrl+p palette</span>
+  </div>
+
+  <div id="diffModal" class="modal" style="display:none">
+    <div class="modal-content" style="width:min(90vw,1000px);max-height:80vh;display:flex;flex-direction:column">
+      <div class="modal-header">diff <span id="diffTitle" style="margin-left:1ch"></span><button class="tx" id="diffClose" aria-label="Close">[x]</button></div>
+      <div id="diffBody" style="flex:1;overflow:auto;padding:12px"></div>
+      <div class="modal-actions" style="justify-content:flex-end"><button class="btn" id="diffDone">[done]</button></div>
+    </div>
+  </div>
+
+  <div id="approvalModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">approval required</div>
+      <div id="approvalBody"></div>
+      <div class="modal-actions">
+        <button class="btn" id="approvalReject">[n] reject</button>
+        <button class="btn primary" id="approvalApprove">[y] approve</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:50;align-items:flex-start;justify-content:center">
+    <div style="width:min(560px,92vw);background:var(--bg);border:1px solid var(--fg);padding:10px 14px">
+      <div id="pal-t" class="b" style="padding:4px 0 8px"> commands</div>
+      <div id="pal-o"></div>
+      <div class="dim" style="padding-top:6px;font-size:.85em">up/down navigate - enter run - esc close</div>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
