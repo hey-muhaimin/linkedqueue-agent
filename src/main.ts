@@ -13,7 +13,9 @@ let sessions: Session[] = [];
 
 app.whenReady().then(async () => {
   win = new BrowserWindow({
-    width: 1440, height: 950, backgroundColor: '#131a29',
+    width: 1440, height: 950, minWidth: 900, minHeight: 600,
+    frame: false, titleBarStyle: 'hidden',
+    backgroundColor: '#131a29',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true },
   });
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
@@ -123,6 +125,15 @@ ipcMain.handle('shell:run', async (_e, { command }: { command: string }) => {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 });
+
+ipcMain.handle('window:minimize', () => { if (win && !win.isDestroyed()) win.minimize(); return { ok: true }; });
+ipcMain.handle('window:maximize', () => {
+  if (!win || win.isDestroyed()) return { ok: false };
+  if (win.isMaximized()) win.unmaximize(); else win.maximize();
+  return { ok: true, maximized: win.isMaximized() };
+});
+ipcMain.handle('window:close', () => { if (win && !win.isDestroyed()) win.close(); return { ok: true }; });
+ipcMain.handle('window:is-maximized', () => ({ ok: true, maximized: !!win && !win.isDestroyed() && win.isMaximized() }));
 
 ipcMain.handle('workspace-files', () => {
   const root = process.env.HARNESS_WORKSPACE || process.cwd();

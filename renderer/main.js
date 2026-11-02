@@ -364,3 +364,11 @@ addEventListener('keydown',e=>{
 
 drawQueue();showEmpty();setSt();
 if(matchMedia('(pointer: fine)').matches)Q.focus();
+
+/* ---------- window controls ---------- */
+(function(){
+  const lights = document.querySelectorAll('.lights i');
+  const actions = [()=>window.win?.close(), ()=>window.win?.minimize(), ()=>window.win?.maximize()];
+  lights.forEach((el,i)=>{ el.style.cursor='pointer'; el.title=['Close','Minimize','Maximize'][i]; el.addEventListener('click', (e)=>{ e.stopPropagation(); actions[i]&&actions[i]() }); });
+  document.querySelector('.tb')?.addEventListener('dblclick', ()=>window.win?.maximize());
+})();

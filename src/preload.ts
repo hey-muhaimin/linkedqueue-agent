@@ -119,4 +119,12 @@ const harness = {
   },
 };
 
+const winControls = {
+  minimize: () => ipcRenderer.invoke('window:minimize'),
+  maximize: () => ipcRenderer.invoke('window:maximize'),
+  close: () => ipcRenderer.invoke('window:close'),
+  isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+};
+contextBridge.exposeInMainWorld('win', winControls);
+
 contextBridge.exposeInMainWorld('harness', harness);
