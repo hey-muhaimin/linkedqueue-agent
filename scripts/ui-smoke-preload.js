@@ -52,4 +52,6 @@ contextBridge.exposeInMainWorld('harness', {
   handoff: { create: () => Promise.resolve({ id: 'h', title: 't' }) },
   onStartup: () => {},
   onEvent: () => {},
+  sessions: { meta: () => Promise.resolve([]), newSession: () => Promise.resolve({ sessions: [] }) },
+  config: { get: () => Promise.resolve({ ok: true, data: { baseUrl: 'https://ollama.com/v1', apiKey: '', model: 'gemma4:31b-cloud' } }), set: () => Promise.resolve({ ok: true, data: {} }) },
 });

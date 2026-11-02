@@ -58,6 +58,8 @@ let busy = false, abort = false, pend = null, tools = 0, hist = [], hi = 0, t0 =
 const sleep = ms => new Promise((r, j) => setTimeout(() => abort ? j('abort') : r(), matchMedia('(prefers-reduced-motion: reduce)').matches ? Math.min(ms, 20) : ms));
 let currentSessionId = null;
 let currentModel = localStorage.getItem('lq-model') || 'gemma4:31b-cloud';
+function updateModelDisplay() { $('#mdl').firstChild.textContent = currentModel + ' '; $('#smd').textContent = currentModel; }
+function updateEndpointDisplay(url) { const elx = $('#sep'); if (elx) elx.textContent = url ? new URL(url).host : 'local endpoint'; }
 let currentMode = 'act';
 const P = { todos: [], at: 0, el: null };
 const FILES = {};
@@ -363,7 +365,8 @@ async function showConfig() {
     try {
       const res = await harness.config.set({ baseUrl: baseUrl.value.trim(), apiKey: apiKey.value, model: modelInput.value.trim() });
       const data = unwrap(res) || {};
-      if (data.model) { currentModel = data.model; $('#mdl').firstChild.textContent = currentModel + ' '; $('#smd').textContent = currentModel; try { localStorage.setItem('lq-model', currentModel); } catch (e) {} }
+      if (data.model) { currentModel = data.model; updateModelDisplay(); try { localStorage.setItem('lq-model', currentModel); } catch (e) {} }
+      updateEndpointDisplay(data.baseUrl);
       toast('Configuration saved');
     } catch (e) { toast('Save failed: ' + e.message); }
   };
@@ -450,7 +453,30 @@ function design() {
 }
 /* ---------- composer ---------- */
 function grow() { Q.style.height = 'auto'; Q.style.height = Math.min(Q.scrollHeight, 200) + 'px'; setSt(); }
-Q.addEventListener('input', grow);
+const slashBox = el('div', 'slash-suggest');
+slashBox.style.cssText = 'position:absolute;left:24px;right:24px;bottom:74px;max-height:220px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:var(--r2);box-shadow:var(--shadow);display:none;z-index:20;padding:4px';
+document.querySelector('.cw')?.append(slashBox);
+let slashIdx = 0;
+function renderSlash() {
+  const v = Q.value.trim();
+  if (!v.startsWith('/')) { slashBox.style.display = 'none'; return; }
+  const q = v.toLowerCase();
+  const items = CM.filter(c => c[0].toLowerCase().startsWith(q) || c[0].toLowerCase().includes(q.slice(1)));
+  if (!items.length) { slashBox.style.display = 'none'; return; }
+  slashIdx = Math.max(0, Math.min(slashIdx, items.length - 1));
+  slashBox.replaceChildren();
+  items.forEach((c, i) => {
+    const r = el('div', 'pal-i' + (i === slashIdx ? ' on' : ''));
+    r.style.cssText = 'display:flex;justify-content:space-between;gap:12px;padding:6px 10px;border-radius:var(--r1);cursor:pointer';
+    r.append(el('span', 'c', c[0]), el('span', 'dim', c[1]));
+    r.onmouseenter = () => { slashIdx = i; renderSlash(); };
+    r.onclick = () => { slashBox.style.display = 'none'; Q.value = c[0]; grow(); cmd(c[0]); };
+    slashBox.append(r);
+  });
+  slashBox.style.display = 'block';
+}
+
+Q.addEventListener('input', () => { grow(); renderSlash(); });
 function send() {
   if (busy) { abort = true; pend && pend.decide(false); return; }
   const v = Q.value; if (!v.trim()) return; Q.value = ''; grow();
@@ -460,6 +486,13 @@ function send() {
 }
 $('#go').onclick = send;
 Q.addEventListener('keydown', e => {
+  if (slashBox.style.display === 'block') {
+    const items = CM.filter(c => c[0].toLowerCase().startsWith(Q.value.trim().toLowerCase()) || c[0].toLowerCase().includes(Q.value.trim().toLowerCase().slice(1)));
+    if (e.key === 'ArrowDown') { e.preventDefault(); slashIdx = Math.min(slashIdx + 1, items.length - 1); renderSlash(); return; }
+    if (e.key === 'ArrowUp') { e.preventDefault(); slashIdx = Math.max(slashIdx - 1, 0); renderSlash(); return; }
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (items[slashIdx]) { const c = items[slashIdx]; slashBox.style.display = 'none'; Q.value = c[0]; grow(); cmd(c[0]); } else if (!busy) send(); return; }
+    if (e.key === 'Escape') { slashBox.style.display = 'none'; return; }
+  }
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!busy) send(); }
   if (e.key === 'ArrowUp' && !Q.value && hi > 0) { e.preventDefault(); Q.value = hist[--hi]; grow(); }
   if (e.key === 'ArrowDown' && hi < hist.length && Q.value === hist[hi]) { e.preventDefault(); hi++; Q.value = hist[hi] || ''; grow(); }
@@ -474,15 +507,14 @@ async function initModels() {
     if (models.length) {
       MODELS.splice(0, MODELS.length, ...models);
       if (!MODELS.includes(currentModel)) currentModel = MODELS[0];
-      $('#mdl').firstChild.textContent = currentModel + ' ';
-      $('#smd').textContent = currentModel;
+      updateModelDisplay();
     }
   } catch (e) {}
 }
 $('#mdl').onclick = () => {
   if (!MODELS.length) return;
   mi = (mi + 1) % MODELS.length; currentModel = MODELS[mi];
-  $('#mdl').firstChild.textContent = currentModel + ' '; $('#smd').textContent = currentModel;
+  updateModelDisplay();
   try { localStorage.setItem('lq-model', currentModel); } catch (e) {}
   toast('Model: ' + currentModel);
 };
@@ -544,7 +576,7 @@ function logo(small) {
 drawQueue();
 showEmpty();
 setSt();
-initModels();
+initModels().then(() => { updateModelDisplay(); harness.config.get().then(r => updateEndpointDisplay((unwrap(r)||{}).baseUrl)).catch(()=>{}); });
 loadSessions();
 if (matchMedia('(pointer: fine)').matches) Q.focus();
 
