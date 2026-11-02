@@ -232,7 +232,9 @@ function toolDone(r, out, fail) {
   r.ic.replaceChildren(); r.ic.className = 'ti ' + (fail ? 'c-err' : 'c-ok'); r.ic.textContent = fail ? '✗' : '✓';
   r.sum.textContent = out[0] || ''; r.out.textContent = out.join('\n'); if (fail) r.sum.style.color = 'var(--err)';
 }
-function say(text) { const d = add(el('div', 'ai')); d.textContent = text; return d; }
+function say(text) { lastAI = null; const d = add(el('div', 'ai')); d.textContent = text; return d; }
+let lastAI = null;
+function textDelta(text) { if (!lastAI || lastAI.isConnected === false) { lastAI = add(el('div', 'ai')); } lastAI.textContent += (text || ''); scroll(); }
 
 /* ---------- approval ---------- */
 function askApproval(ev) {
@@ -263,6 +265,7 @@ harness.onEvent(e => {
   if (!e || typeof e !== 'object') return;
   if (e.agent) return;
   if (e.type === 'text' && e.text) say(e.text);
+  else if (e.type === 'text-delta' && e.text) textDelta(e.text);
   else if (e.type === 'tool') {
     const r = toolRow(e.name, e.args ? JSON.stringify(e.args).slice(0, 80) : '');
     tools++; setSt();
@@ -296,7 +299,7 @@ async function runHarness(v) {
   } catch (e) {
     ok = false; add(el('div', 'ai dim', 'Error: ' + (e && e.message ? e.message : e)));
   } finally {
-    busy = false; pend = null; spin(false); w.remove(); endThread(ok); q.s = ok ? 'done' : 'failed'; drawQueue(); setSt();
+    lastAI = null; busy = false; pend = null; spin(false); w.remove(); endThread(ok); q.s = ok ? 'done' : 'failed'; drawQueue(); setSt();
     loadSessions();
   }
 }
