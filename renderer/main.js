@@ -57,7 +57,7 @@ $$('.tabs [data-tab]').forEach(b => b.onclick = () => tab(b.dataset.tab));
 let busy = false, abort = false, pend = null, tools = 0, hist = [], hi = 0, t0 = 0, tick = 0, thread = null;
 const sleep = ms => new Promise((r, j) => setTimeout(() => abort ? j('abort') : r(), matchMedia('(prefers-reduced-motion: reduce)').matches ? Math.min(ms, 20) : ms));
 let currentSessionId = null;
-let currentModel = localStorage.getItem('lq-model') || 'gemma4:31b';
+let currentModel = localStorage.getItem('lq-model') || 'gemma4:31b-cloud';
 let currentMode = 'act';
 const P = { todos: [], at: 0, el: null };
 const FILES = {};
@@ -302,7 +302,7 @@ function addQ(t, s) { const q = { id: ++qid, t, s, dep: null }; QUE.push(q); dra
 const QUE = []; let qid = 0;
 
 /* ---------- commands ---------- */
-const CM = [['/help', 'Show help'], ['/models', 'Model picker'], ['/config', 'Agent config'], ['/skills', 'Installed skills'], ['/tools', 'List tools'], ['/sessions', 'Sessions'], ['/memory', 'Memory'], ['/agents', 'Agent configs'], ['/queue', 'Task queue'], ['/artifacts', 'Changed files'], ['/design', 'Design system'], ['/clear', 'New thread'], ['/theme', 'Toggle theme']];
+const CM = [['/help', 'Show help'], ['/models', 'Model picker'], ['/config', 'Configure provider/API'], ['/skills', 'Installed skills'], ['/tools', 'List tools'], ['/mcp', 'MCP servers'], ['/sessions', 'Sessions'], ['/memory', 'Memory'], ['/agents', 'Agent configs'], ['/queue', 'Task queue'], ['/artifacts', 'Changed files'], ['/design', 'Design system'], ['/clear', 'New thread'], ['/theme', 'Toggle theme']];
 function msg(t) { add(el('div', 'user', t)); }
 function cmd(s) {
   s = s.trim(); if (!s) return; hist.push(s); hi = hist.length;
@@ -320,6 +320,7 @@ function cmd(s) {
   if (l === '/config') return showConfig();
   if (l === '/skills') return loadSkills();
   if (l === '/tools') return loadTools();
+  if (l === '/mcp') return loadMcp();
   if (l === '/sessions') return loadSessionsCmd();
   if (l === '/memory') return loadMemory();
   if (l === '/agents') return loadAgents();
@@ -344,14 +345,54 @@ async function loadModels() {
   } catch (e) { add(el('div', 'ai dim', 'Models failed: ' + e.message)); }
 }
 async function showConfig() {
-  const c = add(el('div', 'card')); c.style.cssText = 'padding:8px 12px;display:grid;grid-template-columns:auto 1fr;gap:2px 20px';
-  let skills = [], tools = [], mcp = [], perms = {};
-  try { skills = unwrap(await harness.skills.list()) || []; } catch (e) {}
-  try { tools = unwrap(await harness.tools.list()) || []; } catch (e) {}
-  try { mcp = unwrap(await harness.mcp.list()) || []; } catch (e) {}
-  try { perms = unwrap(await harness.permissions.get()) || {}; } catch (e) {}
-  [['model', currentModel], ['mode', currentMode], ['session', currentSessionId || 'none'], ['skills', skills.length], ['tools', tools.length], ['mcp', mcp.length], ['autoApprove', perms.autoApprove]].forEach(([a, b]) => c.append(el('span', 'dim', a), el('span', 'mono', String(b))));
+  const cfgRes = await harness.config.get();
+  const cfg = unwrap(cfgRes) || {};
+  const c = add(el('div', 'card')); c.style.cssText = 'padding:12px;display:flex;flex-direction:column;gap:8px';
+  c.append(el('div', 'b', 'Provider / API configuration'));
+  const presets = el('div', ''); presets.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+  [['Ollama Cloud', 'https://ollama.com/v1', 'gemma4:31b-cloud'], ['OpenRouter', 'https://openrouter.ai/api/v1', 'google/gemma-3-27b-it:free'], ['Groq', 'https://api.groq.com/openai/v1', 'llama-3.3-70b-versatile'], ['Google AI Studio', 'https://generativelanguage.googleapis.com/v1beta/openai', 'gemini-2.5-flash'], ['Local Ollama', 'http://localhost:11434/v1', 'gemma4:31b-cloud']].forEach(([name, url, model]) => {
+    const b = el('button', 'btn ghost'); b.textContent = name; b.onclick = () => { baseUrl.value = url; modelInput.value = model; toast('Preset: ' + name); }; presets.append(b);
+  });
+  c.append(presets);
+  const baseUrl = el('input'); baseUrl.value = cfg.baseUrl || ''; baseUrl.placeholder = 'Base URL'; baseUrl.style.cssText = 'width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r1);background:var(--bg)';
+  const apiKey = el('input'); apiKey.value = cfg.apiKey || ''; apiKey.placeholder = 'API key'; apiKey.type = 'password'; apiKey.style.cssText = baseUrl.style.cssText;
+  const modelInput = el('input'); modelInput.value = cfg.model || currentModel; modelInput.placeholder = 'Model'; modelInput.style.cssText = baseUrl.style.cssText;
+  c.append(baseUrl, apiKey, modelInput);
+  const save = el('button', 'btn pri'); save.textContent = 'Save';
+  save.onclick = async () => {
+    try {
+      const res = await harness.config.set({ baseUrl: baseUrl.value.trim(), apiKey: apiKey.value, model: modelInput.value.trim() });
+      const data = unwrap(res) || {};
+      if (data.model) { currentModel = data.model; $('#mdl').firstChild.textContent = currentModel + ' '; $('#smd').textContent = currentModel; try { localStorage.setItem('lq-model', currentModel); } catch (e) {} }
+      toast('Configuration saved');
+    } catch (e) { toast('Save failed: ' + e.message); }
+  };
+  c.append(save);
+  c.append(el('div', 'dim', 'Base URL, API key, and model are stored in data/config.json and applied to the running app.'));
 }
+async function loadMcp() {
+  try {
+    const res = await harness.mcp.list();
+    const list = unwrap(res) || [];
+    const c = add(el('div', 'card')); c.style.padding = '8px 12px';
+    if (!list.length) { c.append(el('div', 'dim', 'No MCP servers configured. Use /install or mcp:add.')); return; }
+    list.forEach(srv => {
+      const r = el('div', 'row');
+      r.append(el('span', 'ico', srv.connected ? '●' : '○'), el('span', 'tt mono', srv.name), el('span', 'meta', (srv.tools || []).length + ' tools'));
+      const btn = el('button', 'btn ghost'); btn.textContent = srv.connected ? 'Disconnect' : 'Connect';
+      btn.onclick = async () => {
+        try {
+          if (srv.connected) await harness.mcp.disconnect(srv.name); else await harness.mcp.connect(srv.name);
+          toast((srv.connected ? 'Disconnected ' : 'Connected ') + srv.name);
+          loadMcp();
+        } catch (e) { toast('MCP failed: ' + e.message); }
+      };
+      r.append(btn);
+      c.append(r);
+    });
+  } catch (e) { add(el('div', 'ai dim', 'MCP failed: ' + e.message)); }
+}
+
 async function loadSkills() {
   try {
     const res = await harness.skills.list();
@@ -364,7 +405,7 @@ async function loadSkills() {
 async function loadTools() {
   try {
     const res = await harness.tools.list();
-    const list = unwrap(res) || [];
+    const list = (unwrap(res) || []).filter(t => !String(t.name).startsWith('mcp_'));
     const c = add(el('div', 'card')); c.style.padding = '8px 12px';
     list.forEach(t => { const r = el('div'); r.append(el('span', 'mono', t.name), el('span', 'dim', '  ' + (t.description || ''))); c.append(r); });
   } catch (e) { add(el('div', 'ai dim', 'Tools failed: ' + e.message)); }

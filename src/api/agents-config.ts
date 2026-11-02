@@ -57,7 +57,7 @@ export const DEFAULT_AGENT: AgentConfig = {
   name: 'default',
   description: 'General purpose coding agent',
   systemPrompt: 'You are LinkedQueue, a versatile AI agent. Use tools to understand tasks, plan, execute, verify, and report results clearly.',
-  model: process.env.HARNESS_MODEL || 'gemma4:31b',
+  model: process.env.HARNESS_MODEL || 'gemma4:31b-cloud',
   mode: 'plan',
   permissions: {},
   autoApprove: false,

@@ -13,7 +13,7 @@ import type {
   AgentEvent, ApproveFn, Json, Tool, Session, SessionMode, Ctx,
 } from './types';
 
-const DEFAULT_MODEL = process.env.HARNESS_MODEL || 'gemma4:31b';
+const DEFAULT_MODEL = process.env.HARNESS_MODEL || 'gemma4:31b-cloud';
 const MAX_STEPS = 12;
 
 export { loadProjectInstructions };

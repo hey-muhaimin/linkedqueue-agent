@@ -117,6 +117,10 @@ const harness = {
   shell: {
     run: (command: string) => ipcRenderer.invoke('shell:run', { command }),
   },
+  config: {
+    get: () => ipcRenderer.invoke('config:get'),
+    set: (cfg: { baseUrl?: string; apiKey?: string; model?: string }) => ipcRenderer.invoke('config:set', cfg),
+  },
 };
 
 const winControls = {

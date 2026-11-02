@@ -177,7 +177,7 @@ description: Write meaningful tests for behavior and edge cases.
         name: a.name,
         description: a.description,
         systemPrompt: a.systemPrompt,
-        model: process.env.HARNESS_MODEL || 'gemma4:31b',
+        model: process.env.HARNESS_MODEL || 'gemma4:31b-cloud',
         mode: a.mode,
         permissions: {},
         autoApprove: false,

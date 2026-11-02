@@ -11,6 +11,24 @@ import type { AgentEvent, Session, SessionMode, Json } from './types';
 let win: BrowserWindow;
 let sessions: Session[] = [];
 
+const CONFIG_FILE = path.join(process.env.HARNESS_DATA || path.join(process.cwd(), 'data'), 'config.json');
+function loadConfigFile() {
+  try {
+    const cfg = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    if (cfg.baseUrl) process.env.HARNESS_BASE_URL = cfg.baseUrl;
+    if (cfg.apiKey) process.env.HARNESS_API_KEY = cfg.apiKey;
+    if (cfg.model) process.env.HARNESS_MODEL = cfg.model;
+  } catch { /* no config yet */ }
+}
+function readConfigFile() {
+  try { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); } catch { return {}; }
+}
+function writeConfigFile(cfg: any) {
+  fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2));
+}
+loadConfigFile();
+
 app.whenReady().then(async () => {
   win = new BrowserWindow({
     width: 1440, height: 950, minWidth: 900, minHeight: 600,
@@ -134,6 +152,23 @@ ipcMain.handle('window:maximize', () => {
 });
 ipcMain.handle('window:close', () => { if (win && !win.isDestroyed()) win.close(); return { ok: true }; });
 ipcMain.handle('window:is-maximized', () => ({ ok: true, maximized: !!win && !win.isDestroyed() && win.isMaximized() }));
+
+ipcMain.handle('config:get', () => {
+  const cfg = readConfigFile();
+  return { ok: true, data: {
+    baseUrl: process.env.HARNESS_BASE_URL || cfg.baseUrl || 'https://ollama.com/v1',
+    apiKey: process.env.HARNESS_API_KEY || cfg.apiKey || '',
+    model: process.env.HARNESS_MODEL || cfg.model || 'gemma4:31b-cloud',
+  } };
+});
+ipcMain.handle('config:set', (_e, arg: { baseUrl?: string; apiKey?: string; model?: string }) => {
+  const cfg = readConfigFile();
+  if (arg.baseUrl) { process.env.HARNESS_BASE_URL = arg.baseUrl; cfg.baseUrl = arg.baseUrl; }
+  if (arg.apiKey !== undefined) { process.env.HARNESS_API_KEY = arg.apiKey; cfg.apiKey = arg.apiKey; }
+  if (arg.model) { process.env.HARNESS_MODEL = arg.model; cfg.model = arg.model; }
+  writeConfigFile(cfg);
+  return { ok: true, data: { baseUrl: process.env.HARNESS_BASE_URL, apiKey: process.env.HARNESS_API_KEY || '', model: process.env.HARNESS_MODEL } };
+});
 
 ipcMain.handle('workspace-files', () => {
   const root = process.env.HARNESS_WORKSPACE || process.cwd();
