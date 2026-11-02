@@ -10,6 +10,7 @@ import { sendEmail } from './sendEmail';
 import { readFile } from './readFile';
 import { listFiles } from './listFiles';
 import { applyEdit } from './applyEdit';
+import { writeFileTool } from './writeFile';
 import { memoryWrite } from './memoryWrite';
 import { delegate } from './delegate';
 import { grepTool } from './grep';
@@ -31,6 +32,7 @@ export const builtin: Record<string, Tool> = {
   read_file: readFile,
   list_files: listFiles,
   apply_edit: applyEdit,
+  write_file: writeFileTool,
   memory_write: memoryWrite,
   delegate,
   grep: grepTool,

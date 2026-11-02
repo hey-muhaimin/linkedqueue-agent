@@ -6,6 +6,11 @@ import type { Json } from './types';
 
 const cwd = process.cwd();
 export const ROOT = process.env.HARNESS_WORKSPACE || path.join(cwd, 'workspace');
+export function resolveInRoot(p: string): string {
+  const full = path.resolve(ROOT, String(p));
+  if (full !== ROOT && !full.startsWith(ROOT + path.sep)) throw new Error(`Path escapes workspace: ${p}`);
+  return full;
+}
 export const DATA = process.env.HARNESS_DATA || path.join(cwd, 'data');
 export const SKILLS = process.env.HARNESS_SKILLS || path.join(cwd, 'skills');
 export const PLUGINS = process.env.HARNESS_PLUGINS || path.join(cwd, 'plugins');

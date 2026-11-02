@@ -5,6 +5,8 @@ export interface Todo { text: string; status: 'pending' | 'in_progress' | 'done'
 
 export type BaseAgentEvent =
   | { type: 'text'; text: string }
+  | { type: 'text-delta'; text: string }
+  | { type: 'tool-call-delta'; delta: { index: number; id?: string; name?: string; arguments?: string } }
   | { type: 'tool'; name: string; args: Json; result: unknown }
   | { type: 'plan'; todos: Todo[] }
   | { type: 'agent'; id: string; name: string; status: 'start' | 'done' | 'error' | 'cancelled'; task?: string; result?: string }
@@ -15,12 +17,21 @@ export type BaseAgentEvent =
 
 export type AgentEvent = BaseAgentEvent & { agent?: { id: string; name: string } };
 
-export interface Ctx { emit: (e: AgentEvent) => void; model?: string; sessionId?: string }
+export interface Ctx { emit: (e: AgentEvent) => void; model?: string; sessionId?: string; agentConfig?: { name: string; systemPrompt?: string; permissions?: Record<string, 'allow'|'ask'|'deny'>; autoApprove?: boolean }; history?: Json[]; readFiles?: string[] }
 
-export interface Tool<A = any> {
+export interface ToolSpec {
+  name?: string;
+  readOnly?: boolean;
+  risk?: 'safe' | 'conditional' | 'risky';
+  timeoutMs?: number;
+  pathArgs?: string[];
+  /** Legacy compatibility. New tools should prefer `risk`. */
+  risky?: boolean | 'conditional' | ((args: any) => boolean);
+}
+
+export interface Tool<A = any> extends ToolSpec {
   description: string;
   params: Json;
-  risky?: boolean | 'conditional' | ((args: A) => boolean);
   run: (args: A, ctx: Ctx) => Promise<unknown> | unknown;
 }
 
@@ -38,10 +49,12 @@ export interface Session {
   history: Json[];
   todos: Todo[];
   pid: number | null;
+  proposedAgenda?: string[];
   createdAt: number;
   updatedAt: number;
   error?: string;
   lastPrompt?: string;
+  maxSteps?: number;
 }
 
 export interface Hooks {

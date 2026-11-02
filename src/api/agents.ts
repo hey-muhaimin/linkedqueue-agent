@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { runAgent } from '../harness';
 import { saveSession } from '../persistence';
+import { getAgent } from './agents-config';
 import { DATA } from '../util';
 import type { AgentEvent, ApproveFn, Json, Session, SessionMode } from '../types';
 
@@ -63,13 +64,41 @@ export function getSubagent(id: string): SubagentRecord | undefined {
 
 function snap(rec: SubagentRecord): void {
   fs.mkdirSync(DATA, { recursive: true });
-  fs.appendFileSync(FILE, JSON.stringify(rec) + '\n');
+  fs.appendFileSync(FILE, JSON.stringify(rec) + "\n");
+}
+
+export async function runSubagentSync(opts: { name: string; task: string; model?: string; allowedTools?: string[]; agentConfig?: any }): Promise<{ id: string; name: string; result: string }> {
+  const cfg = opts.agentConfig || getAgent(opts.name) || {
+    name: opts.name,
+    systemPrompt: `You are subagent "${opts.name}". Complete the task independently and return a concise result.`,
+    model: opts.model || process.env.HARNESS_MODEL || 'gemma4:31b-cloud',
+    mode: 'act',
+    permissions: {},
+    autoApprove: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  const id = 'subsync_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const emit = (e: any) => {};
+  const result = await runAgent({
+    prompt: `You are subagent "${opts.name}". Complete this task independently and return a concise result. Task:
+${opts.task}`,
+    emit,
+    approve: () => Promise.resolve(false),
+    mode: cfg.mode || 'act',
+    model: opts.model || cfg.model,
+    allowedTools: opts.allowedTools,
+    title: '[sub] ' + opts.name,
+    agentConfig: cfg,
+  });
+  const last = [...result].reverse().find((m: any) => m.role === 'assistant' && typeof m.content === 'string');
+  return { id, name: opts.name, result: last ? String(last.content).slice(0, 4000) : 'done' };
 }
 
 export function startSubagent(opts: { name: string; task: string; model?: string; mode?: SessionMode; allowedTools?: string[] }): SubagentRecord {
   const id = 'sub_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const rec: SubagentRecord = {
-    id, name: opts.name, task: opts.task, status: 'running', model: opts.model || (process.env.HARNESS_MODEL || 'qwen3-coder'),
+    id, name: opts.name, task: opts.task, status: 'running', model: opts.model || (process.env.HARNESS_MODEL || 'gemma4:31b-cloud'),
     mode: opts.mode || 'act', createdAt: Date.now(), updatedAt: Date.now(),
   };
   snap(rec);

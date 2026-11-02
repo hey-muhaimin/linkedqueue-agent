@@ -16,6 +16,7 @@ export function diffText(oldText: string, newText: string): string {
       dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
     }
   }
+  if (a.length > 2000 || b.length > 2000) return '[diff too large: ' + a.length + ' vs ' + b.length + ' lines]';
   const out: string[] = [];
   let i = 0, j = 0;
   while (i < n && j < m) {

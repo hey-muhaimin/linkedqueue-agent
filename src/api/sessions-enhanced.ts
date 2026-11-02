@@ -89,28 +89,29 @@ export async function undoSession(sessionId: string): Promise<{ ok: boolean; rev
     .pop();
   if (!lastAssistantIdx) return { ok: false, reverted: [], message: 'Nothing to undo' };
 
-  // Use git to revert tracked file changes in the workspace root
+  // Restore only files captured by LinkedQueue checkpoints (never a workspace-wide git checkout).
+  const checkDir = path.join(DATA, 'checkpoints', sessionId);
   const reverted: string[] = [];
   try {
-    const status = await (run('git', ['status', '--porcelain']) as Promise<Json>);
-    const stdout = String((status as any).stdout || '');
-    if (stdout) {
-      for (const line of stdout.split('\n')) {
-        const m = line.match(/^(?: M| M|\?\?|\? )(.+)$/);
-        if (m) {
-          const file = m[1].trim();
-          try {
-            const full = path.join(ROOT, file);
-            if (fs.existsSync(full)) {
-              await (run('git', ['checkout', '--', file]) as Promise<Json>);
-              reverted.push(file);
-            }
-          } catch {}
-        }
+    if (fs.existsSync(checkDir)) {
+      const latest = new Map<string, string>();
+      for (const name of fs.readdirSync(checkDir).filter((f) => {
+        try { return fs.statSync(path.join(checkDir, f)).isFile(); } catch { return false; }
+      }).sort()) {
+        const base = name.replace(/^\d+_/, '');
+        if (!base || base.includes('..') || path.isAbsolute(base)) continue;
+        latest.set(base, name);
+      }
+      for (const [base, name] of latest) {
+        const srcFile = path.join(checkDir, name);
+        const target = path.join(ROOT, base);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.copyFileSync(srcFile, target);
+        reverted.push(base);
       }
     }
   } catch {}
-  return { ok: true, reverted, message: 'Undid last turn and restored file changes' };
+  return { ok: true, reverted, message: 'Restored files from the session checkpoints only' };
 }
 
 /**

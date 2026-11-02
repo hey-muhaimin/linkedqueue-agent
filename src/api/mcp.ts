@@ -88,7 +88,6 @@ function requestJson<T = any>(proc: ChildProcess, state: ServerState, method: st
     const timer = setTimeout(() => {
       state.pending.delete(id);
       reject(new Error(`MCP request timed out: ${method}`));
-      try { proc.kill('SIGTERM'); } catch {}
     }, ms);
     state.pending.set(id, { resolve: (v: any) => resolve(v), reject: (e: Error) => reject(e), timer });
     try { proc.stdin!.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n'); } catch (e) {
@@ -117,9 +116,15 @@ async function connectOne(name: string): Promise<McpServerStatus> {
   servers.set(name, state);
 
   const shell = process.platform === 'win32';
+  const safeEnv: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (v === undefined) continue;
+    if (/^(.*API.*|.*TOKEN.*|.*KEY.*|.*SECRET.*|.*PASSWORD.*)$/i.test(k) && (!cfg.env || !(k in cfg.env))) continue;
+    safeEnv[k] = v as string;
+  }
   const proc = spawn(cfg.command, cfg.args ?? [], {
     stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...process.env, ...cfg.env },
+    env: { ...safeEnv, ...(cfg.env || {}) },
     shell,
   });
   state.proc = proc;
@@ -137,6 +142,9 @@ async function connectOne(name: string): Promise<McpServerStatus> {
       if (!line) continue;
       try {
         const msg = JSON.parse(line);
+        if (msg && typeof msg === 'object' && msg.method === 'ping' && typeof msg.id === 'number') {
+          try { proc.stdin!.write(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result: {} }) + String.fromCharCode(10)); } catch {}
+        }
         if (msg && typeof msg === 'object' && typeof msg.id === 'number') {
           const pend = state.pending.get(msg.id);
           if (pend) {
@@ -219,8 +227,9 @@ export function getMcpTools(): Record<string, Tool> {
   for (const [name, st] of servers) {
     if (!st.proc || !st.connected) continue;
     for (const t of st.tools) {
-      const key = `mcp_${sanitize(name)}_${sanitize(t.name)}`;
+      const key = `mcp__${sanitize(name)}__${sanitize(t.name)}`;
       out[key] = {
+        name: key,
         description: `${t.description || t.name} (MCP server: ${name})`,
         params: t.inputSchema || { type: 'object', properties: {} },
         risky: true,

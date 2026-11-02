@@ -70,7 +70,8 @@ ipcMain.handle('run', async (_e, arg: { prompt: string; sessionId?: string; mode
     session,
     mode: arg.mode,
     model: arg.model,
-    rootDir: arg.rootDir || (process.env.HARNESS_WORKSPACE || process.cwd()),
+    rootDir: arg.rootDir || (process.env.HARNESS_WORKSPACE || path.join(process.cwd(), 'workspace')),
+    agentConfig: arg.agentConfig,
     emit: (e: AgentEvent) => { if (win && !win.isDestroyed()) win.webContents.send('event', e); },
     approve,
   });
@@ -86,7 +87,7 @@ ipcMain.handle('execute', async (_e, arg: { sessionId: string }) => {
   session.state = 'running';
   sessions = listSessions();
   const emit = (e: AgentEvent) => win.webContents.send('event', e);
-  const did = await runAgent({ session, emit, approve, prompt: session.lastPrompt || '' });
+  const did = await runAgent({ session, emit, approve });
   saveSession(session);
   sessions = listSessions();
   return { ok: true, messages: did.length };
@@ -171,7 +172,7 @@ ipcMain.handle('config:set', (_e, arg: { baseUrl?: string; apiKey?: string; mode
 });
 
 ipcMain.handle('workspace-files', () => {
-  const root = process.env.HARNESS_WORKSPACE || process.cwd();
+  const root = process.env.HARNESS_WORKSPACE || path.join(process.cwd(), 'workspace');
   try {
     const entries = fs.readdirSync(root, { withFileTypes: true });
     return entries.map((e) => ({ name: e.name, isDirectory: e.isDirectory() })).sort((a, b) => a.name.localeCompare(b.name));

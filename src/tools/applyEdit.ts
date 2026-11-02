@@ -1,19 +1,35 @@
 import type { Tool } from '../types';
 import { obj, str } from '../util';
-import { readFile as readFileFn, writeFile, renderDiff, applyEdit as applyEditFn } from '../fileedit';
+import { readFile as readFileFn, writeFile, renderDiff } from '../fileedit';
+import { resolveInRoot } from '../util';
+import fs from 'fs';
+import path from 'path';
+import { DATA } from '../util';
 
-export const applyEdit: Tool<{ path: string; newText: string }> = {
-  description: 'Replace a file\'s full contents. Returns the diff of old vs new. (Full-file replace.)',
-  params: obj({ path: str, newText: str }, ['path', 'newText']),
-  run: ({ path, newText }) => {
-    const existing = readFileFn(path);
-    const { ok, applied } = applyEditFn(existing, newText);
-    if (ok) writeFile(path, applied);
-    return {
-      path,
-      ok,
-      changed: ok,
-      diff: ok ? renderDiff(existing, applied) : 'Rejected: no change.',
-    };
+function snapshot(sessionId: string | undefined, full: string): void {
+  if (!sessionId) return;
+  const dir = path.join(DATA, 'checkpoints', sessionId);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, `${Date.now()}_${path.basename(full)}`), fs.readFileSync(full));
+}
+
+export const applyEdit: Tool<{ path: string; oldText?: string; newText: string; replaceAll?: boolean }> = {
+  name: 'apply_edit',
+  description: 'Replace exact text in a file. Requires reading the file earlier in the session.',
+  params: obj({ path: str, oldText: str, newText: str, replaceAll: { type: 'boolean' } }, ['path', 'newText']),
+  readOnly: false,
+  risk: 'risky',
+  pathArgs: ['path'],
+  run: ({ path, oldText, newText, replaceAll }, ctx) => {
+    const full = resolveInRoot(path);
+    if (!ctx?.readFiles?.includes(full)) throw new Error('Must read_file before editing this path');
+    const existing = readFileFn(full);
+    if (!oldText) throw new Error('oldText is required for apply_edit; use write_file to create or overwrite a new file');
+    const count = existing.split(oldText).length - 1;
+    if (replaceAll !== true && count !== 1) throw new Error(`Expected exactly one match for oldText (found ${count}); pass replaceAll:true to replace every match`);
+    const applied = replaceAll ? existing.split(oldText).join(newText) : existing.replace(oldText, newText);
+    snapshot(ctx?.sessionId, full);
+    if (applied !== existing) writeFile(full, applied);
+    return { path: full, ok: true, changed: applied !== existing, count, diff: renderDiff(existing, applied) };
   },
 };
