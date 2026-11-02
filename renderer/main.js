@@ -162,7 +162,7 @@ async function loadSessions() {
       b.dataset.sid = s.id;
       const dot = el('span', 'dot ' + (s.state === 'running' ? 'c-info' : s.state === 'done' ? 'c-ok' : 'faint'), s.state === 'running' ? '◐' : s.state === 'done' ? '✓' : '○');
       b.append(dot, el('span', 'tt', s.title || s.id), el('span', 'meta', s.mode || 'act'));
-      b.onclick = () => { currentSessionId = s.id; $('#ttl').textContent = s.title || s.id; toast('Session: ' + (s.title || s.id)); };
+      b.onclick = () => { openSession(s).catch(err => toast('Load failed: ' + (err && err.message ? err.message : err))); };
       container.append(b);
     }
   } catch (e) { toast('Sessions failed: ' + e.message); }
@@ -182,6 +182,29 @@ async function newThread() {
     if (latest) { currentSessionId = latest.id; $('#ttl').textContent = latest.title || 'New thread'; }
     await loadSessions();
   } catch (e) { toast('New session failed: ' + e.message); }
+}
+
+
+async function openSession(s) {
+  if (!s) return;
+  currentSessionId = s.id;
+  $('#ttl').textContent = s.title || s.id;
+  C.replaceChildren(); tools = 0;
+  $('#p-plan').replaceChildren(el('div', 'empty', 'No plan yet.\nRun a command to see steps.'));
+  try {
+    const res = await harness.sessions.get(s.id);
+    const session = unwrap(res) || s;
+    const msgs = Array.isArray(session.history) ? session.history : [];
+    let rendered = 0;
+    for (const m of msgs) {
+      const text = typeof m.content === 'string' ? m.content : (m.content == null ? '' : String(m.content));
+      if (!text) continue;
+      if (m.role === 'user') { msg(text); rendered++; }
+      else if (m.role === 'assistant') { say(text); rendered++; }
+    }
+    if (!rendered) showEmpty();
+  } catch (e) { toast('Session load failed: ' + (e && e.message ? e.message : e)); showEmpty(); }
+  setSt();
 }
 
 /* ---------- status ---------- */

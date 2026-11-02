@@ -23,8 +23,9 @@ export { loadProjectInstructions };
 
 async function chat(messages: Json[], tools: Record<string, Tool>, model: string, signal?: AbortSignal, emit?: (e: AgentEvent) => void): Promise<Json> {
   const base = process.env.HARNESS_BASE_URL || 'http://localhost:11434/v1';
+  const normalizedMessages = (messages || []).map((m: any) => ({ ...m, content: typeof m.content === 'string' ? m.content : (m.content == null ? '' : String(m.content ?? '')) }));
   const body = {
-    model, messages, stream: true,
+    model, messages: normalizedMessages, stream: true,
     tools: Object.entries(tools).map(([name, t]) => ({ type: 'function', function: { name, description: t.description, parameters: t.params } })),
   };
   let lastError: Error | null = null;

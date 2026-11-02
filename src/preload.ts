@@ -102,6 +102,7 @@ const harness = {
     autoApprove: (enabled: boolean) => ipcRenderer.invoke('permissions:auto-approve', { enabled }),
   },
   sessions: {
+    get: (sessionId: string) => ipcRenderer.invoke('sessions:get', { sessionId }),
     meta: () => ipcRenderer.invoke('sessions:meta'),
     fork: (sessionId: string, title?: string) => ipcRenderer.invoke('sessions:fork', { sessionId, title }),
     undo: (sessionId: string) => ipcRenderer.invoke('sessions:undo', { sessionId }),
